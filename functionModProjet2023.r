@@ -1,3 +1,6 @@
+library(tidyverse)
+
+
 ### Mod?le dont la sensibilit? doit ?tre analys?e dans le cadre du projet MODE-MPI 2023-2024
 
 ### Le mod?le est ici d?fini sous forme de fonction pour faciliter vos analyses de sensibilit? (AS)
@@ -14,29 +17,25 @@ modAppli <- function(parametre){
   for (i in 1:nrow(parametre)) { 
 
     # STRUCTURE & PARAMETRES DU MODELE
-    
-    ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
-                    0.0019, 0.0082, 5, 1/365, 1/365, 
-                    0.3, 1/5, 1/20, 1/100, 0.001)
 
     # XX
-    K = parametre[i,1] = 100;		# xx
-    sr = parametre[i,2] = 0.5 ;	# xx
-    m1 = parametre[i,3] = 0.0014 ;	# xx
-    m2 = parametre[i,4] = 0.00029;	# xx
-    m3 = parametre[i,5] = 0.0019;	# xx
-    f2 = parametre[i,6] = 0.0019;	# xx
-    f3 = parametre[i,7] = 0.0082;	# xx
-    portee = parametre[i,8] = 5 ;	# xx
-    t1 = parametre[i,9] = 1/365 ;	# xx
-    t2 = parametre[i,10] = 1/365 ;	# xx
+    K = parametre[i,1] ;		# xx
+    sr = parametre[i,2] ;	# xx
+    m1 = parametre[i,3] ;	# xx
+    m2 = parametre[i,4] ;	# xx
+    m3 = parametre[i,5] ;	# xx
+    f2 = parametre[i,6] ;	# xx
+    f3 = parametre[i,7] ;	# xx
+    portee = parametre[i,8] ;	# xx
+    t1 = parametre[i,9] ;	# xx
+    t2 = parametre[i,10] ;	# xx
 
     # XX
-    trans = parametre[i,11] = 0.3 ; # xx
-    lat = parametre[i,12] = 1/5 ;	# xx
-    rec = parametre[i,13] = 1/20 ;	# xx
-    loss = parametre[i,14] = 1/100;	# xx
-    madd = parametre[i,15] = 0.001;	# xx
+    trans = parametre[i,11] ; # xx
+    lat = parametre[i,12] ;	# xx
+    rec = parametre[i,13] ;	# xx
+    loss = parametre[i,14] ;	# xx
+    madd = parametre[i,15] ;	# xx
 
     # INITIALISATION
     MAT <- array(0, dim=c(4,4,temps)); # nb indiv par classe d'?ge en ligne (derni?re ligne = pop tot), ?tat de sant? en colonne, pas de temps (dimension 3)
@@ -77,13 +76,13 @@ modAppli <- function(parametre){
 
     # sorties ponctuelles ? analyser
     # XX
-    sortie1 <- (MAT[4,2,temps]+MAT[4,3,temps])/sum(MAT[4,,temps])
+    sortie1 <- (MAT[4,2,temps]+MAT[4,3,temps])/sum(MAT[4,,temps]) # proportion de malade (infectieux ou non) à la fin
     # xx
-    sortie2 <- nvinf[temps]
+    sortie2 <- nvinf[temps] # nombre d'infection à la fin
     # xx
-    sortie3 <- max(MAT[4,3,1:temps])
+    sortie3 <- max(MAT[4,3,1:temps]) # ?effectif maximal de malades infectieux
     # xx
-    sortie4 <- sum(nvinf[1:365])
+    sortie4 <- sum(nvinf[1:365]) #nombre d'infection la première année
     
     sorties[i,1] <- sortie1;
     sorties[i,2] <- sortie2;
@@ -91,7 +90,42 @@ modAppli <- function(parametre){
     sorties[i,4] <- sortie4;
     
   }# fin boucle sc?narios AS
-  return(sorties)
+  
+  res = list(sorties, MAT, nvinf)
+  
+  return(res)
 } # fin fonction du mod?le
 
 # END
+
+
+
+ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
+                0.0019, 0.0082, 5, 1/365, 1/365, 
+                0.3, 1/5, 1/20, 1/100, 0.001)
+
+
+scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
+
+res = modAppli(scenario_initial)
+
+
+effectif = tibble(
+       temps = 1:(2*365),
+       S = res[[2]][4,1,],
+       L = res[[2]][4,2,],
+       I = res[[2]][4,3,],
+       R = res[[2]][4,4,],
+       
+       N = S + L + I + R)
+
+
+ggplot() +
+  geom_line(data = effectif, aes(x = temps, y = S, color = "1- Susceptible"), size = 1) +
+  geom_line(data = effectif, aes(x = temps, y = L, color = "2- Latent"), size = 1) +
+  geom_line(data = effectif, aes(x = temps, y = I, color = "3- Infectious"), size = 1) +
+  geom_line(data = effectif, aes(x = temps, y = R, color = "4- Recovered"), size = 1) +
+  geom_line(data = effectif, aes(x = temps, y = N, color = "Population Size"), size = 1) +
+  labs(x = "Time", y = "Population") +
+  theme_minimal() +
+  ggtitle("Initial Model")

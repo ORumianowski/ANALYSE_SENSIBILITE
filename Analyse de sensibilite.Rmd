@@ -11,17 +11,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Question 1
 
   1.A.
+  
   Le modèle est déterministe, à compartiment et basé sur un temps discontinu.
   
   1.B. 
+  
   Le processus biologique modélisé est une épidémie où les individus sont groupés en quatre catégories (sensible, infectés/non-infectieux, infectés/infectieux et rétabli/non-sensible) avec une présence en compte de la structure d'âge de la population (trois classes).
   
   1.C.
   
   FORMULE EN LATEX (si tu es chaud en LATEX, n'hésite pas !)
   
+  
   1.D.
-  Les graphes de transitions (je ferai)
+  
+  ![Texte alternatif](image/transition_stade_epidemie.png){width=50%}
+  ![Texte alternatif](image/transition_classe_age.png){width=50%}
+  
   
   1.E.
   1.F.
@@ -38,8 +44,14 @@ knitr::opts_chunk$set(echo = TRUE)
   
   trans : probabilité d'infection (quitter le groupe des sensibles pour devenir infecté/non-infectieux)
   lat : probabilité de devenir contagieux (quitter le groupe des infectés/non-infectieux pour devenir infectés/infectieux)
-  loss : probabilité de guérir (quitter le groupe des infectés/infectieux pour devenir guéri/non-sensible)
-  madd : probalitité de perte d'immunité (quitter le groupe des guéri/non-sensible pour redevenir sensible)
+  rect: probabilité de guérir (quitter le groupe des infectés/infectieux pour devenir guéri/non-sensible)
+  loss : probalitité de perte d'immunité (quitter le groupe des guéri/non-sensible pour redevenir sensible)
+  
+  madd : probabilité de mourir pendant le stade infectés/infectieux
+  
+  2.
+  
+  cf. fichier functionModProjet2023 - OAT
   
   
   

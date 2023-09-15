@@ -1,13 +1,22 @@
 library(tidyverse)
 library(ggpubr)
-
+library(sensitivity)
 
 ### Mod?le dont la sensibilit? doit ?tre analys?e dans le cadre du projet MODE-MPI 2023-2024
 
 ### Le mod?le est ici d?fini sous forme de fonction pour faciliter vos analyses de sensibilit? (AS)
 ### La fonction renvoie les sorties ponctuelles qui sont ? analyser dans l'AS
 
-modAppli <- function(parametre){  
+ValNominale = c(100, 
+                0.5, 0.0014, 0.00029, 0.0019, 
+                0.0019, 0.0082, 5, 1/365, 1/365, 
+                0.3, 1/5, 1/20, 1/100, 0.001)
+
+scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
+
+
+
+modAppli <- function(parametre = scenario_initial){  
 
   # CONDITIONS DE SIMULATION
   temps = 2*365; # nb de pas de temps (en jours)
@@ -92,64 +101,19 @@ modAppli <- function(parametre){
     
   }# fin boucle sc?narios AS
 
-  return(sorties)
+  return(sorties[1,4])
 } # fin fonction du mod?le
 
 # END
 
+library(sensitivity)
 
 
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
-
-ValNominale = c(100, 
-                0.5, 0.0014, 0.00029, 0.0019, 
-                0.0019, 0.0082, 5, 1/365, 1/365, 
-                0.3, 1/5, 1/20, 1/100, 0.001)
-
-scenario_OAT =  matrix(rep(ValNominale, each = 11), nrow = 11, ncol = 15)
+x <- morris(model = modAppli, factors = 2, r = 4,
+            design = list(type = "oat", levels = 3, grid.jump = 2))
+print(x)
+plot(x)
 
 
-graph_oat = function(i, bornes){
-  
-  scenario_OAT_i = scenario_OAT
 
-  if (bornes[1] != Inf){
-    inf = bornes[1]
-    sup = bornes[2]
-    
-    scenario_OAT_i[, i] = c(ValNominale[i],
-                          inf + (sup-inf)  * c(0, 0.01, 0.1, 0.3, 0.4, 0.5, 0.7, 0.9, 0.99, 1)
-                          )
-  }
-  else{
-    scenario_OAT_i[, i] = ValNominale[i] * c(1,
-                                             0, 1/100, 1/10, 1/5, 0.9,
-                                             1.1, 2, 5, 10, 100)
-  }
-    res = modAppli(scenario_OAT_i)
-    
-    res_plot = tibble(paramettre_i = scenario_OAT_i[, i],
-                  prop_inf = res[,1]/res[1,1],
-                  infec_end = res[,2]/res[1,2],
-                  nb_max_infec = res[,3]/res[1,3] ,
-                  nb_infec_year1 = res[,4]/res[1,4])
-    
-    
-    ggplot() +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = prop_inf, color = "S1"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = infec_end, color = "S2"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = nb_max_infec,  color = "S3"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = nb_infec_year1,  color = "S4"), size = 1) +
-      scale_x_continuous(trans='log10') +
-      labs(x = "Parameter value", y = "Relative variation") +
-      theme_minimal() +
-      ggtitle(par_name[i])
-}
-
-ggarrange(graph_oat(i = 1, bornes = c(Inf, Inf)), graph_oat(i = 2, bornes = c(0, 1)), graph_oat(i = 3, bornes = c(0, 1)),
-          graph_oat(i = 4, bornes = c(0, 1)), graph_oat(i = 4, bornes = c(0, 1)), graph_oat(i = 5, bornes = c(Inf, Inf)),
-          graph_oat(i = 7, bornes = c(Inf, Inf)), graph_oat(i = 8, bornes = c(Inf, Inf)), graph_oat(i = 9, bornes = c(0, 1)),
-          graph_oat(i = 10, bornes = c(0,1)), graph_oat(i = 11, bornes = c(0, 1)), graph_oat(i = 12, bornes = c(0, 1)),
-          graph_oat(i = 13, bornes = c(0, 1)), graph_oat(i = 14, bornes = c(0, 1)), graph_oat(i = 15, bornes = c(0, 1)),
-          ncol = 3, nrow = 5)
 

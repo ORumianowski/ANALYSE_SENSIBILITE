@@ -121,11 +121,11 @@ effectif = tibble(
 
 
 ggplot() +
-  geom_line(data = effectif, aes(x = temps, y = S, color = "1- Susceptible"), size = 1) +
-  geom_line(data = effectif, aes(x = temps, y = L, color = "2- Latent"), size = 1) +
-  geom_line(data = effectif, aes(x = temps, y = I, color = "3- Infectious"), size = 1) +
-  geom_line(data = effectif, aes(x = temps, y = R, color = "4- Recovered"), size = 1) +
-  geom_line(data = effectif, aes(x = temps, y = N, color = "Population Size"), size = 1) +
+  geom_line(data = effectif, aes(x = temps, y = S, color = "1- Susceptible"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = L, color = "2- Latent"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = I, color = "3- Infectious"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = R, color = "4- Recovered"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = N, color = "Population Size"), linewidth = 1) +
   labs(x = "Time", y = "Population") +
   theme_minimal() +
   ggtitle("Initial Model")

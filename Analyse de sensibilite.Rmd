@@ -233,7 +233,7 @@ ggplot() +
 
 ```
 
-  
+  K
 #### 2.A
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}

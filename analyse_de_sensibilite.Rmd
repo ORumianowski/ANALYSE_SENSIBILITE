@@ -159,7 +159,7 @@ ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019,
 
 scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
 
-res = modAppli(scenario_initial)
+res = modAppli1(scenario_initial)
 
 effectif = tibble(
        temps = 1:(2*365),
@@ -214,7 +214,7 @@ graph_oat = function(i, bornes){
                                              0, 1/100, 1/10, 1/5, 0.9,
                                              1.1, 2, 5, 10, 100)
   }
-    sortie = calculeSortieModele(scenario_OAT_i)
+    sortie = modAppli(scenario_OAT_i)
     
     res_plot = tibble(paramettre_i = scenario_OAT_i[, i],
                   prop_inf = sortie[1]/sortie[1,1],
@@ -246,37 +246,74 @@ ggarrange(graph_oat(i = 1, bornes = c(Inf, Inf)), graph_oat(i = 2, bornes = c(0,
 
 
 ```
-#### 3.A.
+### 3. Analyse de sensibilité avec la méthode Morris
 
 ```{r}
 
 par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+lowerValues = ValNominale*.75
+upperValues = ValNominale*1.25
 
-
-x <- morris(model = calculeSortieModele, factors = par_name, r = 4, design = list(type = "oat", levels = 6, grid.jump = 3),
-            binf=ValNominale*.75,
-            bsup=ValNominale*1.25)
-print(x)
-plot(x)
-
-
+Morris <- morris(model = modAppli, 
+                 factors = par_name, 
+                 r = 50, 
+                 design = list(type = "oat", levels = 6, grid.jump = 3),
+                 binf=lowerValues,
+                 bsup=upperValues)
 ```
+
+
+a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
 
 ```{r}
-parametersName = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
 
+plot(Morris)
 
-entree.calculeSortieModelemorris <- morris(model = NULL, factors = parametersName, r = 10, design = list(type = "oat", levels = 6, grid.jump = 3),
-            binf=ValNominale*.75,
-            bsup=ValNominale*1.25)
+# mu.star mesure la sensibilité 
+mu.star <- apply(Morris$ee, 2, function(Morris) mean(abs(Morris)))
+# sigma mesure interactions et relations non linéaires
+sigma <- apply(Morris$ee, 2, sd)
 
-sortie.calculeSortieModelemorris <- calculeSortieModele(entree.calculeSortieModele)
+Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
 
-tell(entree.calculeSortieModele, sortie)
-print(x)
-plot(x)
-
+ggplot(data=NULL,aes(x=mu.star,y=sigma,col=Parametres)) +
+  geom_text(aes(label=parametersName)) +
+  scale_color_manual(values = c("darkblue","darkred")) +
+  xlab(label="mu*") +
+  ylab(label="sigma") +
+  labs(title = "Analyse de Morris") +
+  theme_minimal()
+  
 
 ```
 
+La plupart des paramètres ont une valeur de $\mu^*$ et de $\sigma$ très proche de 0, cela signifique que la variation de ces paramètres a peu d'influence sur la sortie du modèle. Seule la variation de 4 paramètres semble influencer les sorties du modèle de manière plus importante : lat, trans, loss et rec. 
+
+3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats 
+obtenus ?
+
+### 4. Analyse de sensibilité globale avec la méthode FAST
+
+*4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?*
+
+*4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?*
+
+*4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.*
+
+*4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.*
+
+*4.e. Comparez les deux échantillonnages et discutez des implications possibles.*
+
+*4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.*
+
+*4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?*
+
+*4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.*
+
+*4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?*
+
+*4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.*
+
+### 5. Discussion
+*Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?*
 

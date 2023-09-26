@@ -105,7 +105,24 @@ $\mu$ : taux de mortalité due à la maladie
   Dans ce modèle, par rapport à un modèle SIR classique on suppose ...
   
   dynamique des population
-  dynamique épidémiologique
+
+
+ - tous les individus peuvent se reproduire (absense de sexes)
+ - les variations interindividuelles ne propriétés des individus ne dépendent que de leur classe d'âge
+    - la probabilité de se reproduire et le taille des portées ne dépendent que de la classe d'âge
+    - le succès de reproduction dépend de la densité de population uniquement à travers une capacité de l'environnment noté K
+    - le probalité intrasèque de mortalité (non-spécifique à une maladie) ne dépend que de la classe d'âge
+ - les processus de migration sont négligés i.e. la population est considérée comme fermée
+
+
+ dynamique épidémiologique
+ 
+ - les propriétés épidémiologiques des individus sont identiques pour les individus, notamment qu'ils ne dépendent pas de la classe d'âge.
+ - l'épidémie est structuré en quatre groupes: les sensibles, les latents, les infectieux et les guéris.
+
+  
+  
+  
   
 #### 1.F.
   
@@ -161,13 +178,21 @@ scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
 
 res = modAppli1(scenario_initial)
 
+
 effectif = tibble(
        temps = 1:(2*365),
+       
        S = res[[2]][4,1,],
        L = res[[2]][4,2,],
        I = res[[2]][4,3,],
        R = res[[2]][4,4,],
-       N = S + L + I + R)
+       
+       N = S + L + I + R,
+       
+       C1 = res[[2]][1,1,] + res[[2]][1,2,] + res[[2]][1,3,] + res[[2]][1,4,],
+       C2 = res[[2]][2,1,] + res[[2]][2,2,] + res[[2]][2,3,] + res[[2]][2,4,],
+       C3 = res[[2]][3,1,] + res[[2]][3,2,] + res[[2]][3,3,] + res[[2]][3,4,]
+       )
 
 
 ggplot() +
@@ -176,7 +201,18 @@ ggplot() +
   geom_line(data = effectif, aes(x = temps, y = I, color = "3- Infectious"), linewidth = 1) +
   geom_line(data = effectif, aes(x = temps, y = R, color = "4- Recovered"), linewidth = 1) +
   geom_line(data = effectif, aes(x = temps, y = N, color = "Population Size"), linewidth = 1) +
-  labs(x = "Time", y = "Population") +
+  labs(x = "Time", y = "Effectif") +
+  theme_minimal() +
+  ggtitle("Initial Model")
+
+
+
+ggplot() +
+  geom_line(data = effectif, aes(x = temps, y = C1/N, color = "First Age Class"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = C2/N, color = "Second Age Class"), linewidth = 1) +
+  geom_line(data = effectif, aes(x = temps, y = C3/N, color = "Third Age Class"), linewidth = 1) +
+  scale_y_continuous(limits = c(0, 0.55)) +
+  labs(x = "Time", y = "Effectif") +
   theme_minimal() +
   ggtitle("Initial Model")
 
@@ -277,7 +313,7 @@ sigma <- apply(Morris$ee, 2, sd)
 Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
 
 ggplot(data=NULL,aes(x=mu.star,y=sigma,col=Parametres)) +
-  geom_text(aes(label=parametersName)) +
+  geom_text(aes(label=par_name)) +
   scale_color_manual(values = c("darkblue","darkred")) +
   xlab(label="mu*") +
   ylab(label="sigma") +

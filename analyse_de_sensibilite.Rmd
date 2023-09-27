@@ -25,11 +25,14 @@ source(file = "functionModProjet2023.r")
 #### 1.A. Définissez le type de ce modèle
   
    Le modèle est :
+   
   - **déterministe** puisque les résultats qu'il produit sont entièrement déterminés par les paramètres initiaux et les équations le décrivant, sans aucune composante aléatoire,
+  
   - **à compartiment**, les individus sont groupés selon leur état de santé et leur classe d'âge,
+  
   - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieux. 
   
- #### 1.B. Quels sont les processus biologiques en jeu ?
+#### 1.B. Quels sont les processus biologiques en jeu ?
   
   Le grand processus biologique modélisé est une **épidémie**.
   
@@ -78,21 +81,35 @@ source(file = "functionModProjet2023.r")
    \end{array}
   \right.$$
 Avec
+
 $N_{2}(t)=S_{2}(t)+E_{2}(t)+I_{2}(t)+R_{2}(t)$
+
 $N_{3}(t)=S_{3}(t)+E_{3}(t)+I_{3}(t)+R_{3}(t)$
+
 $K$ : capacité de charge du milieu
+
 $SR$ : sex ratio dans la population
+
 $P$ : taille des portées
+
 $m_{i}$ : taux de mortalité naturelle dans la classe d'âge i
+
 $f_{i}$ : taux de fécondité dans la classe d'âge i
+
 $t_{i}$ : taux de passage de la classe d'âge i à la classe d'âge i+1
+
 $\beta$ : taux de transmission de la maladie
+
 $\sigma$ : inverse du temps de latence
+
 $\gamma$ : taux de récupération
+
 $\xi$ : taux de perte d'immunité
+
 $\mu$ : taux de mortalité due à la maladie
 
   
+
 #### 1.D. Fournissez le schéma des transitions entre états concordant avec ces équations
   
   ![Texte alternatif](image/transition_stade_epidemie.png){width=50%}
@@ -102,9 +119,8 @@ $\mu$ : taux de mortalité due à la maladie
   
 #### 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
   
-  Dans ce modèle, par rapport à un modèle SIR classique on suppose ...
-  
-  dynamique des population
+
+Dans la cronstruction du modèle, plusieurs hypothèses sont supposées. Elles concerne la dynamique des population
 
 
  - tous les individus peuvent se reproduire (absense de sexes)
@@ -127,10 +143,10 @@ $\mu$ : taux de mortalité due à la maladie
 #### 1.F.
   
   Les conditions initiales du modèle sont :
-    27 individus sensibles de classe d'âge 1
-    23 individus sensibles de classe d'âge 1
-    36 individus sensibles de classe d'âge 3
-    1 individus infecté et infectieux de classe d'âge 3
+  27 individus sensibles de classe d'âge 1,
+  23 individus sensibles de classe d'âge 1,
+  36 individus sensibles de classe d'âge 3 et
+  1 individus infecté et infectieux de classe d'âge 3.
   
 #### 1.G.
   
@@ -179,7 +195,7 @@ scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
 res = modAppli1(scenario_initial)
 
 
-effectif = tibble(
+effectif_data = tibble(
        temps = 1:(2*365),
        
        S = res[[2]][4,1,],
@@ -193,28 +209,42 @@ effectif = tibble(
        C2 = res[[2]][2,1,] + res[[2]][2,2,] + res[[2]][2,3,] + res[[2]][2,4,],
        C3 = res[[2]][3,1,] + res[[2]][3,2,] + res[[2]][3,3,] + res[[2]][3,4,]
        )
+```
 
 
-ggplot() +
-  geom_line(data = effectif, aes(x = temps, y = S, color = "1- Susceptible"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = L, color = "2- Latent"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = I, color = "3- Infectious"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = R, color = "4- Recovered"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = N, color = "Population Size"), linewidth = 1) +
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+
+
+p1 = ggplot() +
+  geom_line(data = effectif_data, aes(x = temps, y = S, color = "1- Susceptible"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = L, color = "2- Latent"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = I, color = "3- Infectious"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = R, color = "4- Recovered"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = N, color = "Population Size"), linewidth = 1) +
   labs(x = "Time", y = "Effectif") +
   theme_minimal() +
-  ggtitle("Initial Model")
+  ggtitle("Evolution of Epidemic stages - Initial Model")
 
+effectif_data2 <- tibble(effectif = 
+                           c(effectif_data$C1,
+                             effectif_data$C2,
+                             effectif_data$C3),
+                         temps = rep(effectif_data$temps, times = 3))  %>%
+  mutate(age_class = rep(c("First Age Class", "Second Age Class", "Third Age Class"), each = nrow(effectif_data) )) %>% 
+  group_by(temps, age_class) %>%
+  summarise(n = sum(effectif)) %>%
+  mutate(percentage = n / sum(n))
 
-
-ggplot() +
-  geom_line(data = effectif, aes(x = temps, y = C1/N, color = "First Age Class"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = C2/N, color = "Second Age Class"), linewidth = 1) +
-  geom_line(data = effectif, aes(x = temps, y = C3/N, color = "Third Age Class"), linewidth = 1) +
-  scale_y_continuous(limits = c(0, 0.55)) +
+p2 = ggplot(effectif_data2, aes(x=temps, y=percentage, fill=age_class)) + 
+    geom_area(alpha=0.4 , size=1, colour="black")+
+  labs(fill = "Age class") +
   labs(x = "Time", y = "Effectif") +
   theme_minimal() +
-  ggtitle("Initial Model")
+  ggtitle("Evolution of age structure - Initial Model")
+
+
+p1
+p2
 
 ```
 
@@ -333,6 +363,46 @@ obtenus ?
 *4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?*
 
 *4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?*
+
+```{r}
+par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+
+
+
+q.arg_ = list(
+  
+  list(min = 10, max = 500),#K
+  list(min = 0.1, max = 9.9),#sr
+  list(min = 0.00001, max = 0.1),#m1
+  list(min = 0.00001, max = 0.1),#m2
+  list(min = 0.00001, max = 0.1),#m3
+  list(min = 0.00001, max = 0.1),#f2
+  list(min = 0.00001, max = 0.1),#f3
+  list(min = 1, max = 10),#portee
+  list(min = 0.00001, max = 0.1),#t1
+  list(min = 0.00001, max = 0.1),#t2
+  list(min = 0.05, max = 0.6),#trans
+  list(min = 0.05, max = 0.6),#lat
+  list(min = 0.00001, max = 0.1),#rec
+  list(min = 0.00001, max = 0.1),#loss
+  list(min = 0.00001, max = 0.1)#madd
+  )
+
+
+
+
+
+
+Fast <- fast99(model = modAppli, 
+                 factors = par_name, 
+                 n = 20,
+                 q = "qunif", q.arg = q.arg_
+               )
+
+Fast
+#plot(Fast)
+```
+
 
 *4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.*
 

@@ -263,33 +263,25 @@ ValNominale = c(100,
 
 scenario_OAT =  matrix(rep(ValNominale, each = 11), nrow = 11, ncol = 15)
 
-graph_oat = function(i, bornes){
+graph_oat = function(i){
   
   scenario_OAT_i = scenario_OAT
+  
+    inf = ValNominale[i] * 0.75
+    sup = ValNominale[i] * 1.25
 
-  if (bornes[1] != Inf){
-    inf = bornes[1]
-    sup = bornes[2]
-    i=2
-    scenario_OAT_i[, i] = c(ValNominale[i],
-                          inf + (sup-inf)  * c(0, 0.01, 0.1, 0.3, 0.4, 0.5, 0.7, 0.9, 0.99, 1)
-                          )
-  }
-  else{
-    scenario_OAT_i[, i] = ValNominale[i] * c(1,
-                                             0, 1/100, 1/10, 1/5, 0.9,
-                                             1.1, 2, 5, 10, 100)
-  }
+    scenario_OAT_i[, i] = pracma::linspace(inf,sup, n = 11)
+
     sortie = modAppli(scenario_OAT_i)
     
     res_plot = tibble(paramettre_i = scenario_OAT_i[, i],
-                  prop_inf = sortie[1]/sortie[1,1],
-                  infec_end = sortie[2]/sortie[1,2],
-                  nb_max_infec = sortie[3]/sortie[1,3] ,
-                  nb_infec_year1 = sortie[4]/sortie[1,4])
+                  prop_inf = sortie[,1]/sortie[1,1],
+                  infec_end = sortie[,2]/sortie[1,2],
+                  nb_max_infec = sortie[,3]/sortie[1,3] ,
+                  nb_infec_year1 = sortie[,4]/sortie[1,4])
     
     
-    ggplot() +
+    p1 = ggplot() +
       geom_line(data = res_plot, aes(x = paramettre_i, y = prop_inf, color = "S1"), size = 1) +
       geom_line(data = res_plot, aes(x = paramettre_i, y = infec_end, color = "S2"), size = 1) +
       geom_line(data = res_plot, aes(x = paramettre_i, y = nb_max_infec,  color = "S3"), size = 1) +
@@ -298,16 +290,49 @@ graph_oat = function(i, bornes){
       labs(x = "Parameter value", y = "Relative variation") +
       theme_minimal() +
       ggtitle(par_name[i])
+    
+    res_plot2 = tibble(
+             amplitude_S1 = max(res_plot$prop_inf) - min(res_plot$prop_inf),
+             amplitude_S2 = max(res_plot$infec_end)-min(res_plot$infec_end),
+             amplitude_S3 = max(res_plot$nb_max_infec)-min(res_plot$nb_max_infec),
+             amplitude_S4 = max(res_plot$nb_infec_year1)-min(res_plot$nb_infec_year1),
+             sd_S1 = sd(res_plot$prop_inf),
+             sd_S2 = sd(res_plot$infec_end),
+             sd_S3 = sd(res_plot$nb_max_infec),
+             sd_S4 = sd(res_plot$nb_infec_year1))
+    
+    
+    p1 = ggplot() +
+      
+      geom_histogram(data = res_plot2, )
+      geom_line(data = res_plot, aes(x = paramettre_i, y = prop_inf, color = "S1"), size = 1) +
+
+      labs(x = "Parameter value", y = "Relative variation") +
+      theme_minimal() +
+      ggtitle(par_name[i])
+    
+    
 }
+
+#graph_oat(i = 2, bornes = c(0, 1))
 ```
 
 
 ```{r, warning=FALSE, message=FALSE, fig.dim = c(10, 7)}
-ggarrange(graph_oat(i = 1, bornes = c(Inf, Inf)), graph_oat(i = 2, bornes = c(0, 1)), graph_oat(i = 3, bornes = c(0, 1)),
-          graph_oat(i = 4, bornes = c(0, 1)), graph_oat(i = 4, bornes = c(0, 1)), graph_oat(i = 5, bornes = c(Inf, Inf)),
-          graph_oat(i = 7, bornes = c(Inf, Inf)), graph_oat(i = 8, bornes = c(Inf, Inf)), graph_oat(i = 9, bornes = c(0, 1)),
-          graph_oat(i = 10, bornes = c(0,1)), graph_oat(i = 11, bornes = c(0, 1)), graph_oat(i = 12, bornes = c(0, 1)),
-          graph_oat(i = 13, bornes = c(0, 1)), graph_oat(i = 14, bornes = c(0, 1)), graph_oat(i = 15, bornes = c(0, 1)),
+ggarrange(graph_oat(i = 1),
+          graph_oat(i = 2), 
+          graph_oat(i = 3),
+          graph_oat(i = 4), 
+          graph_oat(i = 5),
+          graph_oat(i = 7), 
+          graph_oat(i = 8), 
+          graph_oat(i = 9),
+          graph_oat(i = 10), 
+          graph_oat(i = 11), 
+          graph_oat(i = 12),
+          graph_oat(i = 13), 
+          graph_oat(i = 14), 
+          graph_oat(i = 15),
           ncol = 3, nrow = 5)
 
 
@@ -366,41 +391,36 @@ obtenus ?
 
 ```{r}
 par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+```
 
 
-
-q.arg_ = list(
-  
-  list(min = 10, max = 500),#K
-  list(min = 0.1, max = 9.9),#sr
-  list(min = 0.00001, max = 0.1),#m1
-  list(min = 0.00001, max = 0.1),#m2
-  list(min = 0.00001, max = 0.1),#m3
-  list(min = 0.00001, max = 0.1),#f2
-  list(min = 0.00001, max = 0.1),#f3
-  list(min = 1, max = 10),#portee
-  list(min = 0.00001, max = 0.1),#t1
-  list(min = 0.00001, max = 0.1),#t2
-  list(min = 0.05, max = 0.6),#trans
-  list(min = 0.05, max = 0.6),#lat
-  list(min = 0.00001, max = 0.1),#rec
-  list(min = 0.00001, max = 0.1),#loss
-  list(min = 0.00001, max = 0.1)#madd
-  )
+```{r}
 
 
+q.arg4 = list(min = ValNominale*.75, max = ValNominale*1.25)
 
-
-
-
-Fast <- fast99(model = modAppli, 
+Fast <- fast99(model = NULL, 
                  factors = par_name, 
-                 n = 20,
-                 q = "qunif", q.arg = q.arg_
+                 n = 100,
+                 q = rep("qunif", 15),
+                 q.arg = q.arg4
                )
 
-Fast
-#plot(Fast)
+Fast$X
+
+```
+
+
+```{r}
+Fast <- fast99(model = NULL, 
+                 factors = 3, 
+                 n = 5,
+                 q = "qunif",
+                 q.arg = list(min = rep(0, 5), max = rep(1, 5))
+               )
+
+Fast$X
+
 ```
 
 

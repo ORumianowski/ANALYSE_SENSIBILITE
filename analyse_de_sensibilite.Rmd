@@ -500,8 +500,8 @@ La différence principale entre les 2 échantillonages est que beaucoup plus de 
 
 #### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
 ```{r}
-result100 = modAppli(sample100)
-result1000 = modAppli(sample1000)
+fast100 = modAppli(sample100)
+fast1000 = modAppli(sample1000)
 ```
 
 #### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?

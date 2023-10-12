@@ -15,12 +15,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggpubr)
 library(sensitivity)
-
+library(dplyr)
+library(cowplot)
 source(file = "functionModProjet2023.r")
 ```
 
 
-### Question 1
+### 1. Faites une description du modèle dont le code est fourni
 
 #### 1.A. Définissez le type de ce modèle
   
@@ -120,7 +121,7 @@ $\mu$ : taux de mortalité due à la maladie
 #### 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
   
 
-Dans la cronstruction du modèle, plusieurs hypothèses sont supposées. Elles concerne la dynamique des population
+Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations
 
 
  - tous les individus peuvent se reproduire (absense de sexes)
@@ -140,15 +141,15 @@ Dans la cronstruction du modèle, plusieurs hypothèses sont supposées. Elles c
   
   
   
-#### 1.F.
-  
+#### 1.F. Quelles sont les conditions initiales ?
+
   Les conditions initiales du modèle sont :
   27 individus sensibles de classe d'âge 1,
   23 individus sensibles de classe d'âge 1,
   36 individus sensibles de classe d'âge 3 et
   1 individus infecté et infectieux de classe d'âge 3.
   
-#### 1.G.
+#### 1.G. Listez et définissez les sorties possibles du modèle
   
   Les sorties proposés sont :
   
@@ -166,12 +167,12 @@ Dans la cronstruction du modèle, plusieurs hypothèses sont supposées. Elles c
   
   6- le nombre d'individus sensibles à la fin de la période d'étude
   
-#### 1.H.
+#### 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
   
   K : Capacité de l'environnment. Valeur au-dessus de laquelle la population ne produit plus de portée.
   sr : Sex-ratio (proportion de femelles)
   portee : taille des portées
-  m_i : mortalité intrasèque spécifique à la classe i
+  m_i : mortalité naturelle dans la classe d'âge i
   f_i : fécondité de la classe i
   t_i : probabilité de partir de la classe d'âge i pour rentrer dans la classe i+1
   
@@ -182,7 +183,7 @@ Dans la cronstruction du modèle, plusieurs hypothèses sont supposées. Elles c
   
   madd : probabilité de mourir pendant le stade infectés/infectieux
   
-#### 1.I.
+#### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
@@ -248,7 +249,7 @@ p2
 
 ```
 
-  K
+### 2. Analyse de sensibilité du modèle en faisant varier les paramètres un par un (OAT = one-at-a-time)
 #### 2.A Justifiez les valeurs testées
 
 #### 2.B. Fournissez votre script
@@ -261,95 +262,95 @@ ValNominale = c(100,
                 0.0019, 0.0082, 5, 1/365, 1/365, 
                 0.3, 1/5, 1/20, 1/100, 0.001)
 
-scenario_OAT =  matrix(rep(ValNominale, each = 11), nrow = 11, ncol = 15)
+makeAnalyseOAT <- function(ValNominale){
+  sortie = createMatriceForOAT(ValNominale) %>%
+    modAppli() %>%
+    normaliseSortie(ValNominale)
+  return(sortie)
+}
 
-graph_oat = function(i){
+createMatriceForOAT <- function(ValNominale){
+  nbParametres = length(ValNominale)
+  nbScenariosParParam = 11
+  nbScenariosTotal = nbScenariosParParam*nbParametres
+  valeurMin = ValNominale * 0.75
+  valeurMax = ValNominale * 1.25
+
+  matrixScenario =  matrix(rep(ValNominale, each = nbScenariosTotal), nrow = nbScenariosTotal, ncol = nbParametres)
+  for (i in 1:nbParametres){
+    i_min = nbScenariosParParam*(i-1)+1
+    i_max = nbScenariosParParam*i
+
+    matrixScenario[i_min:i_max,i] = pracma::linspace(valeurMin[i],valeurMax[i], n = nbScenariosParParam)
+  }
+  return(matrixScenario)
+}
+
+normaliseSortie <- function(sortie,ValNominale){
+  sortieNominale = modAppli(matrix(ValNominale, nrow=1, ncol=15))
+  return(data.frame(prop_inf = sortie[,1]/sortieNominale[,1],
+                    infec_end = sortie[,2]/sortieNominale[,2],
+                    nb_max_infec = sortie[,3]/sortieNominale[,3],
+                    nb_infec_year1 = sortie[,4]/sortieNominale[,4]))
+}
+
+plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+  nbScenariosParParam = 11
+  i_min = nbScenariosParParam*(i-1)+1
+  i_max = nbScenariosParParam*i
+  resultParam_i = data.frame(parametre=matrixScenario[i_min:i_max,i],
+                             prop_inf=sortieNormalise[i_min:i_max,1],
+                             nb_infected_end=sortieNormalise[i_min:i_max,2],
+                             nb_max_infec=sortieNormalise[i_min:i_max,3],
+                             nb_infec_year1=sortieNormalise[i_min:i_max,4])
   
-  scenario_OAT_i = scenario_OAT
-  
-    inf = ValNominale[i] * 0.75
-    sup = ValNominale[i] * 1.25
-
-    scenario_OAT_i[, i] = pracma::linspace(inf,sup, n = 11)
-
-    sortie = modAppli(scenario_OAT_i)
-    
-    res_plot = tibble(paramettre_i = scenario_OAT_i[, i],
-                  prop_inf = sortie[,1]/sortie[1,1],
-                  infec_end = sortie[,2]/sortie[1,2],
-                  nb_max_infec = sortie[,3]/sortie[1,3] ,
-                  nb_infec_year1 = sortie[,4]/sortie[1,4])
-    
-    
     p1 = ggplot() +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = prop_inf, color = "S1"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = infec_end, color = "S2"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = nb_max_infec,  color = "S3"), size = 1) +
-      geom_line(data = res_plot, aes(x = paramettre_i, y = nb_infec_year1,  color = "S4"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infected_end, color = "S2"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_max_infec,  color = "S3"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infec_year1,  color = "S4"), size = 1) +
       scale_x_continuous(trans='log10') +
       labs(x = "Parameter value", y = "Relative variation") +
       theme_minimal() +
-      ggtitle(par_name[i])+ 
-      theme(legend.title = element_blank())
+      ggtitle(par_name[i])
     
-    res_plot2 = tibble( index = c("A-S1","A-S2", "A-S3", "A-S4",
-                                  "DS-S1", "DS-S2", "DS-S3","DS-S4"),
-                        group=rep(c("Amplitude", "Standard Deviation"), each=4),
-                        value = c(max(res_plot$prop_inf) - min(res_plot$prop_inf),
-                                  max(res_plot$infec_end)-min(res_plot$infec_end),
-                                  max(res_plot$nb_max_infec)-min(res_plot$nb_max_infec),
-                                  max(res_plot$nb_infec_year1)-min(res_plot$nb_infec_year1),
-                                  sd(res_plot$prop_inf),
-                                  sd(res_plot$infec_end),
-                                  sd(res_plot$nb_max_infec),
-                                  sd(res_plot$nb_infec_year1)))
+      res_plot2 = tibble(group=rep(c("S1", "S2", "S3", "S4"), each=length(resultParam_i$prop_inf)),
+                         value = c(resultParam_i$prop_inf,
+                                  resultParam_i$nb_infected_end,
+                                  resultParam_i$nb_max_infec,
+                                  resultParam_i$nb_infec_year1))
     
         
     
         p2 = ggplot()+
-          geom_bar(data=res_plot2, aes(x=index, y=value, fill = group),stat="identity")+
-          scale_fill_brewer(palette="Paired")+
-          theme_minimal()+ 
-          theme(legend.title = element_blank())+
-          theme(axis.text.x = element_text(angle = 90))
+          geom_boxplot(data=res_plot2, aes(y=value, fill = group))
         
         p3 = ggarrange(p1, p2,
           ncol = 2, nrow = 1)
-   
-
-  return(p3)
+    
+    return(p3)
 }
 
-graph_oat(i = 2)
+```
+
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+matriceOAT = createMatriceForOAT(ValNominale)
+sortieNormalise = makeAnalyseOAT(ValNominale)
+head(sortieNormalise)
+
+plotOATAnalysis(i=1,sortieNormalise,matriceOAT)
+
 ```
 
 
 ```{r, warning=FALSE, message=FALSE, fig.dim = c(10, 7)}
-ggarrange(graph_oat(i = 1),
-          graph_oat(i = 2), 
-                  ncol = 1, nrow = 2) 
-ggarrange(graph_oat(i = 3),
-          graph_oat(i = 4), 
-                  ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 5),
-          graph_oat(i = 6), 
-                  ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 7), 
-          graph_oat(i = 8), 
-                 ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 9),
-          graph_oat(i = 10), 
-                  ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 11),
-          graph_oat(i = 12), 
-                 ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 13), 
-          graph_oat(i = 14), 
-                  ncol = 1, nrow = 2)
-ggarrange(graph_oat(i = 15),
-          ncol = 1, nrow = 2)
-
-
+plots <- list()
+nbOfPlots <- 15
+for (i in 1:nbOfPlots) {
+  plots[[i]] <- plotOATAnalysis(i, sortieNormalise, matriceOAT)
+}
+plot_grid(plotlist = plots, ncol = 1)
 ```
 ### 3. Analyse de sensibilité avec la méthode Morris
 
@@ -359,49 +360,88 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
 lowerValues = ValNominale*.75
 upperValues = ValNominale*1.25
 
+# On utilise la fonction Morris du package sensitivity
 Morris <- morris(model = modAppli, 
                  factors = par_name, 
                  r = 50, 
+                 scale=TRUE,
                  design = list(type = "oat", levels = 6, grid.jump = 3),
                  binf=lowerValues,
                  bsup=upperValues)
 ```
 
 
-a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
+#### 3.a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
 
 ```{r}
+get_dfMorris <- function(Morris){
+  # Cette fonction sert à récupérer mu, mu* et sigma pour chaque sortie du modèle sous 
+  # la forme d'un data frame
+  dfMorris = getMorrisResult(Morris$ee,mean,"mu") %>%
+    cbind(getMorrisResult(abs(Morris$ee),mean,"mu.star")) %>% # mu.star mesure la sensibilité 
+    cbind(getMorrisResult(Morris$ee,sd,"sigma")) # sigma mesure interactions et relations non linéaires
+  return(dfMorris)
+}
 
-plot(Morris)
-
-# mu.star mesure la sensibilité 
-mu.star <- apply(Morris$ee, 2, function(Morris) mean(abs(Morris)))
-# sigma mesure interactions et relations non linéaires
-sigma <- apply(Morris$ee, 2, sd)
-
-Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
-
-ggplot(data=NULL,aes(x=mu.star,y=sigma,col=Parametres)) +
-  geom_text(aes(label=par_name)) +
-  scale_color_manual(values = c("darkblue","darkred")) +
-  xlab(label="mu*") +
-  ylab(label="sigma") +
-  labs(title = "Analyse de Morris") +
-  theme_minimal()
+getMorrisResult <- function(Morris_ee, functionToApply,parameter){
+  # Sous fonction de get_dfMorris pour calculer mu, mu* ou sigma
+  # en appliquant la methode donnée dans l'aide de la fonction morris
+  df = apply(Morris_ee, 3, function(M){apply(M, 2, functionToApply)}) %>%
+    as.data.frame() %>%
+    renameColMorris(parameter)
+}
   
+renameColMorris <- function(df,parameter){
+  # Sous fonction de getMorrisResult, sert à avoir des noms
+  # de colonnes qui font sens
+  colnames(df) <- paste0(parameter, "_S", 1:4)
+  return(df)
+}
+
+plotMorris <- function(mu.star_SX,sigma_SX,title="Analyse de Morris",parametersList=par_name){
+  Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
+  
+  plot <- ggplot(data=NULL,aes(x=mu.star_SX,y=sigma_SX,col=Parametres)) +
+    geom_text(aes(label=parametersList),size=2) +
+    scale_color_manual(values = c("darkblue","darkred")) +
+    xlab(label="mu*") +
+    ylab(label="sigma") +
+    labs(title = title) +
+    theme_minimal()+
+    theme(text = element_text(size = 6))
+  return(plot)
+}
+
+dfMorris <- get_dfMorris(Morris)
+plot_S1 <- plotMorris(mu.star_SX=dfMorris$mu.star_S1,sigma_SX=dfMorris$sigma_S1,
+                      title="Sortie : Nombre d'infectés le dernier jour")
+plot_S2 <- plotMorris(mu.star_SX=dfMorris$mu.star_S2,sigma_SX=dfMorris$sigma_S2,
+                      title="Sortie : Nombre d'infection le dernier jour")
+plot_S3 <- plotMorris(mu.star_SX=dfMorris$mu.star_S3,sigma_SX=dfMorris$sigma_S3,
+                      title="Sortie : Nombre d'infectés sur les 2 annnées")
+plot_S4 <- plotMorris(mu.star_SX=dfMorris$mu.star_S4,sigma_SX=dfMorris$sigma_S4,
+                      title = "Sortie : Nombre d'infection la première année")
+
+grid <- plot_grid(plotlist = list(plot_S1,plot_S2,plot_S3,plot_S4),ncol=2)
+
+plot_grid(
+  ggdraw() + draw_text("Analyse de Morris", x = 0.5, y = 1, vjust = 2, hjust = 0.5, size = 16),
+  grid,
+  ncol = 1,
+  rel_heights = c(0.1, 1)
+)
 
 ```
 
-La plupart des paramètres ont une valeur de $\mu^*$ et de $\sigma$ très proche de 0, cela signifique que la variation de ces paramètres a peu d'influence sur la sortie du modèle. Seule la variation de 4 paramètres semble influencer les sorties du modèle de manière plus importante : lat, trans, loss et rec. 
 
-3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats 
-obtenus ?
+
+#### 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
 
 ### 4. Analyse de sensibilité globale avec la méthode FAST
 
-*4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?*
+#### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
 
-*4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?*
+#### 4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?
 
 ```{r}
 par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
@@ -409,40 +449,101 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
 
 
 ```{r}
+scenarios_par_param = 100
 
-
-q.arg4 = list(min = ValNominale*.75, max = ValNominale*1.25)
+q.arg4 <- Map(list, ValNominale * 0.75, ValNominale * 1.25)
+names(q.arg4) <- par_name
 
 Fast <- fast99(model = NULL, 
                  factors = par_name, 
-                 n = 100,
+                 n = scenarios_par_param,
                  q = rep("qunif", 15),
-                 q.arg = q.arg4
-               )
+                 q.arg =q.arg4)
 
-Fast$X
-
+sample100 = Fast$X
+head(sample100)
 ```
 
 
 
+#### 4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.
+```{r}
+par(mfrow=c(2,2), mar = c(3, 3, 1, 1), cex.lab = 0.7, mgp = c(1.5, 0.5, 0))
 
-*4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.*
+for (i in 1:4){
+  valueMin = q.arg4[[i]][[1]]
+  valueMax = q.arg4[[i]][[2]]
+  param = par_name[i]
+  plot(sample100[,i],pch=20, cex=.7,ylab=paste(param,"value"),main=paste("Variation de",param))
+  abline(h=valueMin,col="red",lty=2)
+  abline(h=valueMax,col="red",lty=2)
+  
+  hist(sample100[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
+}
+```
 
-*4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.*
+#### 4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.
+```{r}
+scenarios_par_param = 1000
 
-*4.e. Comparez les deux échantillonnages et discutez des implications possibles.*
+Fast <- fast99(model = NULL, 
+                 factors = par_name, 
+                 n = scenarios_par_param,
+                 q = rep("qunif", 15),
+                 q.arg =q.arg4)
+sample1000 = Fast$X
+```
 
-*4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.*
 
-*4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?*
+```{r}
+par(mfrow=c(2,2), mar = c(3, 3, 1, 1), cex.lab = 0.7, mgp = c(1.5, 0.5, 0))
 
-*4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.*
+for (i in 1:4){
+  valueMin = q.arg4[[i]][[1]]
+  valueMax = q.arg4[[i]][[2]]
+  plot(sample1000[,i],pch=20, cex=.7,ylab=paste(par_name[i],"value"),main=paste("Variation de",par_name[i]))
+  abline(h=valueMin,col="red",lty=2)
+  abline(h=valueMax,col="red",lty=2)
+  
+  hist(sample100[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
 
-*4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?*
+}
+```
 
-*4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.*
+#### 4.e. Comparez les deux échantillonnages et discutez des implications possibles.
+La différence principale entre les 2 échantillonages est que beaucoup plus de valeurs par paramètres sont représentées lorsqu'il y a plus de scénarios par paramètres. Par conséquent, on peut facilement imaginer que le nombre de combinaison de valeurs possibles est bien plus grand dans le cas à 1000 scénarios. A priori, plus de scenarios devraient donc donner de meilleurs estimations sur la sensibilité des paramètres, mais demandera aussi un temps de computation plus élevé.
+
+#### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
+```{r}
+result100 = modAppli(sample100)
+result1000 = modAppli(sample1000)
+```
+
+#### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
+```{r}
+par(mfrow=c(2,2), cex.lab = 0.8,cex.main = 0.9)
+title = paste("Distribution pour la sortie",
+              c("1 \n (nombre d'infectés le dernier jour)",
+                "2 \n (nombre d'infections le dernier jour)",
+                "3 \n (nombre d'infectés sur les 2 années)",
+                "4 \n (nombre d'infection la première année)"
+                ))
+for (i in 1:4){
+  hist(result100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=500)
+}
+
+```
+On observe 2 types de distributions : distribution fortement centrée autour d'une valeur moyenne (sortie 1) et distribution plus ou moins uniforme (sortie 2 et 4). La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Une distribution centrée indique que les variations des paramètres d'entrée ont peu d'impact sur la valeur de la sortie. Au contraire, une distribution uniforme indique que les variations des paramètres d'entrée ont un effet important sur les valeurs de la sortie. Les sorties ayant ce type de distribution devraient donc être plus pertinentes pour comprendre quels paramètres d'entrée ont un effet sur la variabilité des sorties. 
+
+
+#### 4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.
+
+
+#### 4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?
+
+#### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.
 
 ### 5. Discussion
-*Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?*
+####Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
+
 

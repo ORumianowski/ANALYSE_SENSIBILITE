@@ -17,7 +17,7 @@ library(ggpubr)
 library(sensitivity)
 library(dplyr)
 library(cowplot)
-source(file = "functionModProjet2023.r")
+source(file = "functionModProjet2023_with_seasonality.r")
 ```
 
 
@@ -515,8 +515,8 @@ La différence principale entre les 2 échantillonages est que beaucoup plus de 
 
 #### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
 ```{r}
-fast100 = modAppli(sample100)
-fast1000 = modAppli(sample1000)
+result100 = modAppli(sample100)
+result1000 = modAppli(sample1000)
 ```
 
 #### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?

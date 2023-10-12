@@ -289,51 +289,65 @@ graph_oat = function(i){
       scale_x_continuous(trans='log10') +
       labs(x = "Parameter value", y = "Relative variation") +
       theme_minimal() +
-      ggtitle(par_name[i])
+      ggtitle(par_name[i])+ 
+      theme(legend.title = element_blank())
     
-    res_plot2 = tibble(
-             amplitude_S1 = max(res_plot$prop_inf) - min(res_plot$prop_inf),
-             amplitude_S2 = max(res_plot$infec_end)-min(res_plot$infec_end),
-             amplitude_S3 = max(res_plot$nb_max_infec)-min(res_plot$nb_max_infec),
-             amplitude_S4 = max(res_plot$nb_infec_year1)-min(res_plot$nb_infec_year1),
-             sd_S1 = sd(res_plot$prop_inf),
-             sd_S2 = sd(res_plot$infec_end),
-             sd_S3 = sd(res_plot$nb_max_infec),
-             sd_S4 = sd(res_plot$nb_infec_year1))
+    res_plot2 = tibble( index = c("A-S1","A-S2", "A-S3", "A-S4",
+                                  "DS-S1", "DS-S2", "DS-S3","DS-S4"),
+                        group=rep(c("Amplitude", "Standard Deviation"), each=4),
+                        value = c(max(res_plot$prop_inf) - min(res_plot$prop_inf),
+                                  max(res_plot$infec_end)-min(res_plot$infec_end),
+                                  max(res_plot$nb_max_infec)-min(res_plot$nb_max_infec),
+                                  max(res_plot$nb_infec_year1)-min(res_plot$nb_infec_year1),
+                                  sd(res_plot$prop_inf),
+                                  sd(res_plot$infec_end),
+                                  sd(res_plot$nb_max_infec),
+                                  sd(res_plot$nb_infec_year1)))
     
+        
     
-    p1 = ggplot() +
-      
-      geom_histogram(data = res_plot2, )
-      geom_line(data = res_plot, aes(x = paramettre_i, y = prop_inf, color = "S1"), size = 1) +
+        p2 = ggplot()+
+          geom_bar(data=res_plot2, aes(x=index, y=value, fill = group),stat="identity")+
+          scale_fill_brewer(palette="Paired")+
+          theme_minimal()+ 
+          theme(legend.title = element_blank())+
+          theme(axis.text.x = element_text(angle = 90))
+        
+        p3 = ggarrange(p1, p2,
+          ncol = 2, nrow = 1)
+   
 
-      labs(x = "Parameter value", y = "Relative variation") +
-      theme_minimal() +
-      ggtitle(par_name[i])
-    
-    
+  return(p3)
 }
 
-#graph_oat(i = 2, bornes = c(0, 1))
+graph_oat(i = 2)
 ```
 
 
 ```{r, warning=FALSE, message=FALSE, fig.dim = c(10, 7)}
 ggarrange(graph_oat(i = 1),
           graph_oat(i = 2), 
-          graph_oat(i = 3),
+                  ncol = 1, nrow = 2) 
+ggarrange(graph_oat(i = 3),
           graph_oat(i = 4), 
-          graph_oat(i = 5),
-          graph_oat(i = 7), 
+                  ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 5),
+          graph_oat(i = 6), 
+                  ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 7), 
           graph_oat(i = 8), 
-          graph_oat(i = 9),
+                 ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 9),
           graph_oat(i = 10), 
-          graph_oat(i = 11), 
-          graph_oat(i = 12),
-          graph_oat(i = 13), 
+                  ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 11),
+          graph_oat(i = 12), 
+                 ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 13), 
           graph_oat(i = 14), 
-          graph_oat(i = 15),
-          ncol = 3, nrow = 5)
+                  ncol = 1, nrow = 2)
+ggarrange(graph_oat(i = 15),
+          ncol = 1, nrow = 2)
 
 
 ```
@@ -411,17 +425,6 @@ Fast$X
 ```
 
 
-```{r}
-Fast <- fast99(model = NULL, 
-                 factors = 3, 
-                 n = 5,
-                 q = "qunif",
-                 q.arg = list(min = rep(0, 5), max = rep(1, 5))
-               )
-
-Fast$X
-
-```
 
 
 *4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.*

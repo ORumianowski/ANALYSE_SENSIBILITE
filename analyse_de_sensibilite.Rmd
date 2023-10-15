@@ -2,19 +2,21 @@
 title: "Analyse de sensibilité d'une modèle de propagation d'une épidémie - MEPI"
 author : "Louis Schroll & Odin Rumianowski"
 date: "2023-10-05"
+style : spacelab
 output :
   html_document :
+    style : sandstone
     toc : yes
     toc_float : yes
     warning : no
     message : no
     code_fold : hide
-    style : simplex
+    
 ---
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
 ```
 
 ```{r, include=FALSE}
@@ -38,7 +40,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee",
 ```
 
 
-### 1. Faites une description du modèle dont le code est fourni
+### 1. Description du modèle
 
 #### 1.A. Définissez le type de ce modèle
   
@@ -90,14 +92,14 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee",
    \end{array}
   \right.$$
   Pour la classe d'âge 3 (senior)
-  $$\left\{ 
+  $$ \left\{ 
   \begin{array}{ll}
   S_{3}(t+1)= S_{2}(t).t_{2} + S_{3}(t).(1-m_{3}\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{3}(t) \\
    E_{3}(t+1)= E_{2}(t).t_{2} +  E_{3}(t).(1-m_{3}-\sigma)+S_{3}(t).\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)} \\
     I_{3}(t+1)= I_{2}(t).t_{2} +  I_{1}(t).(1-m_{3}-\mu-\gamma)+E_{3}(t).\sigma \\
      R_{3}(t+1)= R_{2}(t).t_{2} +  R_{3}(t).(1-m_{3}-\xi)+I_{3}(t).\gamma
    \end{array}
-  \right.$$
+  \right. $$
 Avec
 
 $N_{2}(t)=S_{2}(t)+E_{2}(t)+I_{2}(t)+R_{2}(t)$
@@ -272,7 +274,7 @@ p2
 
 ```
 
-### 2. Analyse de sensibilité du modèle en faisant varier les paramètres un par un (OAT = one-at-a-time)
+### 2. Méthode OAT
 #### 2.A Justifiez les valeurs testées
 
 Il a été fait le choix de faire varier uniformément chaque paramètre sur un intervalle avec 25% supérieure (respectivement inférieure) à la valeur nominale. L’analyse de sensibilité doit permettre d'évaluer les variations des sorties pour de faibles déviations de des paramètres. La valeur de 25% de variation nous paraît raisonnable pour chaque paramètre et a donc été choisie.
@@ -469,7 +471,7 @@ plot_grid(plotlist = plots, ncol = 1)
 ```
 
 
-### 3. Analyse de sensibilité avec la méthode Morris
+### 3. Méthode Morris
 
 ```{r}
 
@@ -553,7 +555,7 @@ plot_grid(
 
 #### 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
 
-### 4. Analyse de sensibilité globale avec la méthode FAST
+### 4. Méthode FAST
 
 #### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
 

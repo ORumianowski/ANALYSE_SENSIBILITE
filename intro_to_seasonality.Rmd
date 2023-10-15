@@ -1,0 +1,63 @@
+---
+title: "Analyse de sensibilité d'une modèle de propagation d'une épidémie - MEPI"
+author : "Louis Schroll & Odin Rumianowski"
+date: "2023-10-05"
+output :
+  html_document :
+    toc : yes
+    toc_float : yes
+    warning : no
+    message : no
+    code_fold : hide
+    style : simplex
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(sensitivity)
+library(dplyr)
+library(cowplot)
+source(file = "functionModProjet2023_with_seasonality.R")
+```
+
+
+```{r}
+ trans_saisonnalité = function(trans, t, periode = 365){
+      
+      w=2*pi/periode
+      trans_ = trans * (1 + sin(0 + w*t))
+      
+      return(trans_)
+    }
+```
+
+```{r}
+
+trans = 0.3
+
+trans_plot = tibble(time = 1:(365)*2) %>% 
+  mutate(trans = trans_saisonnalité(trans=trans, time, periode = 365))
+
+
+```
+
+```{r}
+
+library(ggplot2)
+
+p = ggplot()+
+  geom_point(data = trans_plot, aes(x= time, y= trans))+
+  geom_vline(
+    xintercept = c((1:2)*365),
+    colour = "blue"
+  )
+p
+
+```
+

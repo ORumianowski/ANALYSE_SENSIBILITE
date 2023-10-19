@@ -320,13 +320,10 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
                                   resultParam_i$nb_max_infec,
                                   resultParam_i$nb_infec_year1))
     
-        
-    
         p2 = ggplot()+
           geom_boxplot(data=res_plot2, aes(y=value, fill = group))
         
-        p3 = ggarrange(p1, p2,
-          ncol = 2, nrow = 1)
+        p3 = ggarrange(p1, p2, ncol = 2, nrow = 1)
     
     return(p3)
 }
@@ -344,13 +341,13 @@ plotOATAnalysis(i=1,sortieNormalise,matriceOAT)
 ```
 
 
-```{r, warning=FALSE, message=FALSE, fig.dim = c(10, 7)}
+```{r, warning=FALSE, message=FALSE}
 plots <- list()
 nbOfPlots <- 15
 for (i in 1:nbOfPlots) {
   plots[[i]] <- plotOATAnalysis(i, sortieNormalise, matriceOAT)
+  show(plots[[i]])
 }
-plot_grid(plotlist = plots, ncol = 1)
 ```
 ### 3. Analyse de sensibilité avec la méthode Morris
 
@@ -516,7 +513,7 @@ La différence principale entre les 2 échantillonages est que beaucoup plus de 
 #### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
 ```{r}
 fast100 = modAppli(sample100)
-fast1000 = modAppli(sample1000)
+#fast1000 = modAppli(sample1000)
 ```
 
 #### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
@@ -529,7 +526,7 @@ title = paste("Distribution pour la sortie",
                 "4 \n (nombre d'infection la première année)"
                 ))
 for (i in 1:4){
-  hist(result100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=500)
+  hist(sample100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=500)
 }
 
 ```
@@ -537,6 +534,10 @@ On observe 2 types de distributions : distribution fortement centrée autour d'u
 
 
 #### 4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.
+
+```{r}
+#tell(fast100)
+```
 
 
 #### 4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?

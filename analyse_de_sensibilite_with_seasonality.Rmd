@@ -1,11 +1,17 @@
 ---
-title: "Analyse sensibilité"
-author: "RUMIANOWSKI 0."
-output: 
-  html_document:
-    theme: simplex
-date: "2023-09-11"
+title: "Analyse de sensibilité d'une modèle de propagation d'une épidémie - MEPI"
+author : "Louis Schroll & Odin Rumianowski"
+date: "2023-10-05"
+output :
+  html_document :
+    toc : yes
+    toc_float : yes
+    warning : no
+    message : no
+    code_fold : hide
+    style : simplex
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,179 +23,24 @@ library(ggpubr)
 library(sensitivity)
 library(dplyr)
 library(cowplot)
-source(file = "functionModProjet2023_with_seasonality.r")
+source(file = "functionModProjet2023_with_seasonality.R")
 ```
 
 
-### 1. Faites une description du modèle dont le code est fourni
+```{r}
 
-#### 1.A. Définissez le type de ce modèle
-  
-   Le modèle est :
-   
-  - **déterministe** puisque les résultats qu'il produit sont entièrement déterminés par les paramètres initiaux et les équations le décrivant, sans aucune composante aléatoire,
-  
-  - **à compartiment**, les individus sont groupés selon leur état de santé et leur classe d'âge,
-  
-  - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieux. 
-  
-#### 1.B. Quels sont les processus biologiques en jeu ?
-  
-  Le grand processus biologique modélisé est une **épidémie**.
-  
-  Dans ce modèle, les individus sont groupés en quatre catégories selon le stade épidémique:  
-  
-  1- Les individus susceptibles, notés S. Ils sont susceptibles de se faire infecter. 
-  
-  2- Les individus exposés (infectés/non-infectieux), notés E ou L. Ils sont dans un état latent dans lequel ils sont infectés mais pas encore contagieux.
-  
-  3- Les individus infectés/infectieux, notés I. Ils sont infectés et contagieux. Cette classe a un risque de mortalité additionnel lié à la maladie.
-  
-  4- Les individus rétablis/non-sensible, notés R. Ils ne sont plus contagieux ni susceptibles d'être infectés. Ils peuvent malgré tout perdre leur immunité et redevenir susceptibles. 
-  
-  Ce modèle est donc un modèle SEIRS/SLIRS (Susceptible-Exposé/Latent-Infecté-Retiré-Susceptible). Les processus biologiques représentés à travers ce modèle correspondent aux transitions entre les états et sont la **transmission** de la maladie, le temps de **latence** entre l'exposition et l'état infectieux, la **mortalité due à la maladie** ou la **récupération/immunisation** après la maladie, et la **perte d'immunité**. A ces processus liés à la maladie s'ajoute des processus démographiques : **natalité** et **mortalité naturelle** (hors maladie). 
-  
-  En plus des états de santé, la population est structuré en classe d'âge ayant un taux de mortalité et de fertilité propre. 
-
-  
-#### 1.C. Ecrivez les équations associées
-  
- Pour la classe d'âge 1 (enfant)
-  $$\left\{ 
-  \begin{array}{ll}
-  S_{1}(t+1)= S_{1}(t).(1-m_{1}-t_{1}-\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{1}(t)+SR.P.(N_{2}(t).f_{2}+N_{3}(t).f_{3}).(1-\frac{N}{K}) \\
-   E_{1}(t+1)= E_{1}(t).(1-m_{1}-t_{1}-\sigma)+S_{1}(t).\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)} \\
-    I_{1}(t+1)= I_{1}(t).(1-m_{1}-t_{1}-\mu-\gamma)+E_{1}(t).\sigma \\
-     R_{1}(t+1)= R_{1}(t).(1-m_{1}-t_{1}-\xi)+I_{1}(t).\gamma
-   \end{array}
-  \right.$$
-  Pour la classe d'âge 2 (adulte)
-  $$\left\{ 
-  \begin{array}{ll}
-  S_{2}(t+1)= S_{1}(t).t_{1} + S_{2}(t).(1-m_{2}-t_{2}-\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{2}(t) \\
-   E_{2}(t+1)= E_{1}(t).t_{1} + E_{2}(t).(1-m_{2}-t_{2}-\sigma)+S_{2}(t).\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)} \\
-    I_{2}(t+1)= I_{1}(t).t_{1} + I_{2}(t).(1-m_{2}-t_{2}-\mu-\gamma)+E_{2}(t).\sigma \\
-     R_{2}(t+1)= R_{1}(t).t_{1} + R_{2}(t).(1-m_{2}-t_{2}-\xi)+I_{2}(t).\gamma
-   \end{array}
-  \right.$$
-  Pour la classe d'âge 3 (senior)
-  $$\left\{ 
-  \begin{array}{ll}
-  S_{3}(t+1)= S_{2}(t).t_{2} + S_{3}(t).(1-m_{3}\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{3}(t) \\
-   E_{3}(t+1)= E_{2}(t).t_{2} +  E_{3}(t).(1-m_{3}-\sigma)+S_{3}(t).\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)} \\
-    I_{3}(t+1)= I_{2}(t).t_{2} +  I_{1}(t).(1-m_{3}-\mu-\gamma)+E_{3}(t).\sigma \\
-     R_{3}(t+1)= R_{2}(t).t_{2} +  R_{3}(t).(1-m_{3}-\xi)+I_{3}(t).\gamma
-   \end{array}
-  \right.$$
-Avec
-
-$N_{2}(t)=S_{2}(t)+E_{2}(t)+I_{2}(t)+R_{2}(t)$
-
-$N_{3}(t)=S_{3}(t)+E_{3}(t)+I_{3}(t)+R_{3}(t)$
-
-$K$ : capacité de charge du milieu
-
-$SR$ : sex ratio dans la population
-
-$P$ : taille des portées
-
-$m_{i}$ : taux de mortalité naturelle dans la classe d'âge i
-
-$f_{i}$ : taux de fécondité dans la classe d'âge i
-
-$t_{i}$ : taux de passage de la classe d'âge i à la classe d'âge i+1
-
-$\beta$ : taux de transmission de la maladie
-
-$\sigma$ : inverse du temps de latence
-
-$\gamma$ : taux de récupération
-
-$\xi$ : taux de perte d'immunité
-
-$\mu$ : taux de mortalité due à la maladie
-
-  
-
-#### 1.D. Fournissez le schéma des transitions entre états concordant avec ces équations
-  
-  ![Texte alternatif](image/transition_stade_epidemie.png){width=50%}
-  ![Texte alternatif](image/transition_classe_age.png){width=50%}
-
-=> 1 seul schema avec tout
-  
-#### 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
-  
-
-Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations
-
-
- - tous les individus peuvent se reproduire (absense de sexes)
- - les variations interindividuelles ne propriétés des individus ne dépendent que de leur classe d'âge
-    - la probabilité de se reproduire et le taille des portées ne dépendent que de la classe d'âge
-    - le succès de reproduction dépend de la densité de population uniquement à travers une capacité de l'environnment noté K
-    - le probalité intrasèque de mortalité (non-spécifique à une maladie) ne dépend que de la classe d'âge
- - les processus de migration sont négligés i.e. la population est considérée comme fermée
-
-
- dynamique épidémiologique
- 
- - les propriétés épidémiologiques des individus sont identiques pour les individus, notamment qu'ils ne dépendent pas de la classe d'âge.
- - l'épidémie est structuré en quatre groupes: les sensibles, les latents, les infectieux et les guéris.
-
-  
-  
-  
-  
-#### 1.F. Quelles sont les conditions initiales ?
-
-  Les conditions initiales du modèle sont :
-  27 individus sensibles de classe d'âge 1,
-  23 individus sensibles de classe d'âge 1,
-  36 individus sensibles de classe d'âge 3 et
-  1 individus infecté et infectieux de classe d'âge 3.
-  
-#### 1.G. Listez et définissez les sorties possibles du modèle
-  
-  Les sorties proposés sont :
-  
-  1- la proportion de malades i.e. infectés (infectieux ou non) à la fin de la période d'étude (deux ans)
-  
-  2- le nombre d'infection réalisées le dernier jour de la période d'étude
-  
-  3- le nombre maximum de d'infectés pendant la période d'étude
-  
-  4- le nombre d'infection réalisés pendant la première année de l'étude
-  
-  D'autres sorties possibles du modèle peuvent être :
-  
-  5- la proportion maximale de malades pendant la période d'étude
-  
-  6- le nombre d'individus sensibles à la fin de la période d'étude
-  
-#### 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
-  
-  K : Capacité de l'environnment. Valeur au-dessus de laquelle la population ne produit plus de portée.
-  sr : Sex-ratio (proportion de femelles)
-  portee : taille des portées
-  m_i : mortalité naturelle dans la classe d'âge i
-  f_i : fécondité de la classe i
-  t_i : probabilité de partir de la classe d'âge i pour rentrer dans la classe i+1
-  
-  trans : probabilité d'infection (quitter le groupe des sensibles pour devenir infecté/non-infectieux)
-  lat : probabilité de devenir contagieux (quitter le groupe des infectés/non-infectieux pour devenir infectés/infectieux)
-  rect: probabilité de guérir (quitter le groupe des infectés/infectieux pour devenir guéri/non-sensible)
-  loss : probalitité de perte d'immunité (quitter le groupe des guéri/non-sensible pour redevenir sensible)
-  
-  madd : probabilité de mourir pendant le stade infectés/infectieux
-  
-#### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
-
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
 ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
                 0.0019, 0.0082, 5, 1/365, 1/365, 
                 0.3, 1/5, 1/20, 1/100, 0.001)
 
+par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee",
+             "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+```
+
+
+#### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 
 scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
 
@@ -255,13 +106,19 @@ p2
 #### 2.B. Fournissez votre script
   
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
 
-ValNominale = c(100, 
-                0.5, 0.0014, 0.00029, 0.0019, 
-                0.0019, 0.0082, 5, 1/365, 1/365, 
-                0.3, 1/5, 1/20, 1/100, 0.001)
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
+}
+```
 
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
 makeAnalyseOAT <- function(ValNominale){
   sortie = createMatriceForOAT(ValNominale) %>%
     modAppli() %>%
@@ -293,8 +150,12 @@ normaliseSortie <- function(sortie,ValNominale){
                     nb_max_infec = sortie[,3]/sortieNominale[,3],
                     nb_infec_year1 = sortie[,4]/sortieNominale[,4]))
 }
+```
 
-plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+resultParam_i = function(i,sortieNormalise,matrixScenario){
+  
   nbScenariosParParam = 11
   i_min = nbScenariosParParam*(i-1)+1
   i_max = nbScenariosParParam*i
@@ -303,6 +164,21 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
                              nb_infected_end=sortieNormalise[i_min:i_max,2],
                              nb_max_infec=sortieNormalise[i_min:i_max,3],
                              nb_infec_year1=sortieNormalise[i_min:i_max,4])
+  
+  return(resultParam_i)
+  
+}
+```
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+matriceOAT = createMatriceForOAT(ValNominale)
+sortieNormalise = makeAnalyseOAT(ValNominale)
+```
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+  
+  resultParam_i = resultParam_i(i,sortieNormalise,matrixScenario)
   
     p1 = ggplot() +
       geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
@@ -320,10 +196,12 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
                                   resultParam_i$nb_max_infec,
                                   resultParam_i$nb_infec_year1))
     
-        
-    
         p2 = ggplot()+
           geom_boxplot(data=res_plot2, aes(y=value, fill = group))
+        
+        
+        
+
         
         p3 = ggarrange(p1, p2,
           ncol = 2, nrow = 1)
@@ -334,29 +212,87 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
 ```
 
 
-```{r, warning=FALSE, message=FALSE, include=TRUE}
-matriceOAT = createMatriceForOAT(ValNominale)
-sortieNormalise = makeAnalyseOAT(ValNominale)
-head(sortieNormalise)
+```{r}
+oat_index= tibble(parametre = NaN,
+            sensibility = NaN,
+            elasticity = NaN,
+            sortie = NaN)
 
-plotOATAnalysis(i=1,sortieNormalise,matriceOAT)
+for (sortie_ in 1:4){
+  
+  res_s = c()
+  res_e = c()
+  for (i_ in 1:15){
+    resultParam_i_ = resultParam_i(i=i_,sortieNormalise,matriceOAT)
+    
+    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_s = c(res_s, res_i)
+    
+    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_e = c(res_e, res_i)
+  }
+  
+  tibble_sortie_i = tibble(
+         parametre = par_name,
+         sensibility = res_s,
+         elasticity = res_e,
+         sortie = rep(paste0("S", sortie_), length(res_s)))
+  
+  oat_index = rbind(oat_index, tibble_sortie_i)
+}
 
+res  = oat_index[2:nrow(oat_index),]
+
+nature_par <- c(rep("démographiques",10),rep("épidémiques",5))
+
+s1 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S1"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S1")+ theme(legend.position = "none")
+
+s2 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S2"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S2")+ theme(legend.position = "none")
+
+s3 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S3"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S3")+ theme(legend.position = "none")
+
+s4 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S4"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S4")+ theme(legend.position = "none")
 ```
 
 
-```{r, warning=FALSE, message=FALSE, fig.dim = c(10, 7)}
+```{r}
+plot_grid(plotlist = list(s1, s2, s3, s4),ncol=2)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
 plots <- list()
 nbOfPlots <- 15
 for (i in 1:nbOfPlots) {
   plots[[i]] <- plotOATAnalysis(i, sortieNormalise, matriceOAT)
 }
-plot_grid(plotlist = plots, ncol = 1)
 ```
+
+
+```{r, warning=FALSE, message=FALSE}
+for (i in 1:15){
+  plots[[i]] %>% print()
+}
+
+```
+
+
 ### 3. Analyse de sensibilité avec la méthode Morris
 
 ```{r}
 
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
 lowerValues = ValNominale*.75
 upperValues = ValNominale*1.25
 
@@ -433,93 +369,34 @@ plot_grid(
 
 ```
 
-
-
-#### 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
-
 ### 4. Analyse de sensibilité globale avec la méthode FAST
-
-#### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
-
-#### 4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?
-
-```{r}
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
-```
-
 
 ```{r}
 scenarios_par_param = 100
 
 q.arg4 <- Map(list, ValNominale * 0.75, ValNominale * 1.25)
 names(q.arg4) <- par_name
+```
+
+```{r}
+scenarios_par_param = 100
 
 Fast <- fast99(model = NULL, 
                  factors = par_name, 
                  n = scenarios_par_param,
                  q = rep("qunif", 15),
                  q.arg =q.arg4)
-
 sample100 = Fast$X
-head(sample100)
 ```
 
 
 
-#### 4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.
-```{r}
-par(mfrow=c(2,2), mar = c(3, 3, 1, 1), cex.lab = 0.7, mgp = c(1.5, 0.5, 0))
-
-for (i in 1:4){
-  valueMin = q.arg4[[i]][[1]]
-  valueMax = q.arg4[[i]][[2]]
-  param = par_name[i]
-  plot(sample100[,i],pch=20, cex=.7,ylab=paste(param,"value"),main=paste("Variation de",param))
-  abline(h=valueMin,col="red",lty=2)
-  abline(h=valueMax,col="red",lty=2)
-  
-  hist(sample100[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
-}
-```
-
-#### 4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.
-```{r}
-scenarios_par_param = 1000
-
-Fast <- fast99(model = NULL, 
-                 factors = par_name, 
-                 n = scenarios_par_param,
-                 q = rep("qunif", 15),
-                 q.arg =q.arg4)
-sample1000 = Fast$X
-```
 
 
-```{r}
-par(mfrow=c(2,2), mar = c(3, 3, 1, 1), cex.lab = 0.7, mgp = c(1.5, 0.5, 0))
-
-for (i in 1:4){
-  valueMin = q.arg4[[i]][[1]]
-  valueMax = q.arg4[[i]][[2]]
-  plot(sample1000[,i],pch=20, cex=.7,ylab=paste(par_name[i],"value"),main=paste("Variation de",par_name[i]))
-  abline(h=valueMin,col="red",lty=2)
-  abline(h=valueMax,col="red",lty=2)
-  
-  hist(sample100[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
-
-}
-```
-
-#### 4.e. Comparez les deux échantillonnages et discutez des implications possibles.
-La différence principale entre les 2 échantillonages est que beaucoup plus de valeurs par paramètres sont représentées lorsqu'il y a plus de scénarios par paramètres. Par conséquent, on peut facilement imaginer que le nombre de combinaison de valeurs possibles est bien plus grand dans le cas à 1000 scénarios. A priori, plus de scenarios devraient donc donner de meilleurs estimations sur la sensibilité des paramètres, mais demandera aussi un temps de computation plus élevé.
-
-#### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
 ```{r}
 result100 = modAppli(sample100)
-result1000 = modAppli(sample1000)
 ```
 
-#### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
 ```{r}
 par(mfrow=c(2,2), cex.lab = 0.8,cex.main = 0.9)
 title = paste("Distribution pour la sortie",
@@ -533,17 +410,3 @@ for (i in 1:4){
 }
 
 ```
-On observe 2 types de distributions : distribution fortement centrée autour d'une valeur moyenne (sortie 1) et distribution plus ou moins uniforme (sortie 2 et 4). La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Une distribution centrée indique que les variations des paramètres d'entrée ont peu d'impact sur la valeur de la sortie. Au contraire, une distribution uniforme indique que les variations des paramètres d'entrée ont un effet important sur les valeurs de la sortie. Les sorties ayant ce type de distribution devraient donc être plus pertinentes pour comprendre quels paramètres d'entrée ont un effet sur la variabilité des sorties. 
-
-
-#### 4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.
-
-
-#### 4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?
-
-#### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.
-
-### 5. Discussion
-####Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
-
-

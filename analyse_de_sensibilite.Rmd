@@ -1,14 +1,22 @@
 ---
-title: "Analyse sensibilité"
-author: "RUMIANOWSKI 0."
-output: 
-  html_document:
-    theme: simplex
-date: "2023-09-11"
+title: "Analyse de sensibilité d'une modèle de propagation d'une épidémie - MEPI"
+author : "Louis Schroll & Odin Rumianowski"
+date: "2023-10-05"
+style : spacelab
+output :
+  html_document :
+    style : sandstone
+    toc : yes
+    toc_float : yes
+    warning : no
+    message : no
+    code_fold : hide
+    
 ---
 
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
 ```
 
 ```{r, include=FALSE}
@@ -21,7 +29,18 @@ source(file = "functionModProjet2023.r")
 ```
 
 
-### 1. Faites une description du modèle dont le code est fourni
+```{r}
+
+ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
+                0.0019, 0.0082, 5, 1/365, 1/365, 
+                0.3, 1/5, 1/20, 1/100, 0.001)
+
+par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee",
+             "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+```
+
+
+### 1. Description du modèle
 
 #### 1.A. Définissez le type de ce modèle
   
@@ -73,14 +92,14 @@ source(file = "functionModProjet2023.r")
    \end{array}
   \right.$$
   Pour la classe d'âge 3 (senior)
-  $$\left\{ 
+  $$ \left\{ 
   \begin{array}{ll}
   S_{3}(t+1)= S_{2}(t).t_{2} + S_{3}(t).(1-m_{3}\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{3}(t) \\
    E_{3}(t+1)= E_{2}(t).t_{2} +  E_{3}(t).(1-m_{3}-\sigma)+S_{3}(t).\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)} \\
     I_{3}(t+1)= I_{2}(t).t_{2} +  I_{1}(t).(1-m_{3}-\mu-\gamma)+E_{3}(t).\sigma \\
      R_{3}(t+1)= R_{2}(t).t_{2} +  R_{3}(t).(1-m_{3}-\xi)+I_{3}(t).\gamma
    \end{array}
-  \right.$$
+  \right. $$
 Avec
 
 $N_{2}(t)=S_{2}(t)+E_{2}(t)+I_{2}(t)+R_{2}(t)$
@@ -121,7 +140,7 @@ $\mu$ : taux de mortalité due à la maladie
 #### 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
   
 
-Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations
+Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations:
 
 
  - tous les individus peuvent se reproduire (absense de sexes)
@@ -132,10 +151,11 @@ Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concer
  - les processus de migration sont négligés i.e. la population est considérée comme fermée
 
 
- dynamique épidémiologique
+Les hypothèses de modélisations principales liées à la dynamique épidémiologique sont :
  
  - les propriétés épidémiologiques des individus sont identiques pour les individus, notamment qu'ils ne dépendent pas de la classe d'âge.
  - l'épidémie est structuré en quatre groupes: les sensibles, les latents, les infectieux et les guéris.
+ - les paramètres épidémiologiques restent invariant au cours du temps e.g. absence d'évolution de l'agent infectieux et de l'hôte / absense de saisonalité 
 
   
   
@@ -170,26 +190,31 @@ Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concer
 #### 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
   
   K : Capacité de l'environnment. Valeur au-dessus de laquelle la population ne produit plus de portée.
+  
   sr : Sex-ratio (proportion de femelles)
+  
   portee : taille des portées
+  
   m_i : mortalité naturelle dans la classe d'âge i
+  
   f_i : fécondité de la classe i
+  
   t_i : probabilité de partir de la classe d'âge i pour rentrer dans la classe i+1
   
   trans : probabilité d'infection (quitter le groupe des sensibles pour devenir infecté/non-infectieux)
+  
   lat : probabilité de devenir contagieux (quitter le groupe des infectés/non-infectieux pour devenir infectés/infectieux)
+  
   rect: probabilité de guérir (quitter le groupe des infectés/infectieux pour devenir guéri/non-sensible)
+  
   loss : probalitité de perte d'immunité (quitter le groupe des guéri/non-sensible pour redevenir sensible)
   
   madd : probabilité de mourir pendant le stade infectés/infectieux
   
+  
 #### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
-ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
-                0.0019, 0.0082, 5, 1/365, 1/365, 
-                0.3, 1/5, 1/20, 1/100, 0.001)
-
 
 scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
 
@@ -249,19 +274,28 @@ p2
 
 ```
 
-### 2. Analyse de sensibilité du modèle en faisant varier les paramètres un par un (OAT = one-at-a-time)
+### 2. Méthode OAT
 #### 2.A Justifiez les valeurs testées
+
+Il a été fait le choix de faire varier uniformément chaque paramètre sur un intervalle avec 25% supérieure (respectivement inférieure) à la valeur nominale. L’analyse de sensibilité doit permettre d'évaluer les variations des sorties pour de faibles déviations de des paramètres. La valeur de 25% de variation nous paraît raisonnable pour chaque paramètre et a donc été choisie.
+
 
 #### 2.B. Fournissez votre script
   
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
 
-ValNominale = c(100, 
-                0.5, 0.0014, 0.00029, 0.0019, 
-                0.0019, 0.0082, 5, 1/365, 1/365, 
-                0.3, 1/5, 1/20, 1/100, 0.001)
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
+}
+```
 
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
 makeAnalyseOAT <- function(ValNominale){
   sortie = createMatriceForOAT(ValNominale) %>%
     modAppli() %>%
@@ -293,8 +327,12 @@ normaliseSortie <- function(sortie,ValNominale){
                     nb_max_infec = sortie[,3]/sortieNominale[,3],
                     nb_infec_year1 = sortie[,4]/sortieNominale[,4]))
 }
+```
 
-plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+resultParam_i = function(i,sortieNormalise,matrixScenario){
+  
   nbScenariosParParam = 11
   i_min = nbScenariosParParam*(i-1)+1
   i_max = nbScenariosParParam*i
@@ -303,6 +341,17 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
                              nb_infected_end=sortieNormalise[i_min:i_max,2],
                              nb_max_infec=sortieNormalise[i_min:i_max,3],
                              nb_infec_year1=sortieNormalise[i_min:i_max,4])
+  
+  return(resultParam_i)
+  
+}
+```
+
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+  
+  resultParam_i = resultParam_i(i,sortieNormalise,matrixScenario)
   
     p1 = ggplot() +
       geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
@@ -324,7 +373,7 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
           geom_boxplot(data=res_plot2, aes(y=value, fill = group))
         
         p3 = ggarrange(p1, p2, ncol = 2, nrow = 1)
-    
+
     return(p3)
 }
 
@@ -335,9 +384,75 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
 matriceOAT = createMatriceForOAT(ValNominale)
 sortieNormalise = makeAnalyseOAT(ValNominale)
 head(sortieNormalise)
+```
 
-plotOATAnalysis(i=1,sortieNormalise,matriceOAT)
 
+
+
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+plotOATAnalysis(i=5,sortieNormalise,matriceOAT)
+
+```
+
+
+```{r}
+oat_index= tibble(parametre = NaN,
+            sensibility = NaN,
+            elasticity = NaN,
+            sortie = NaN)
+
+for (sortie_ in 1:4){
+  
+  res_s = c()
+  res_e = c()
+  for (i_ in 1:15){
+    resultParam_i_ = resultParam_i(i=i_,sortieNormalise,matriceOAT)
+    
+    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_s = c(res_s, res_i)
+    
+    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_e = c(res_e, res_i)
+  }
+  
+  tibble_sortie_i = tibble(
+         parametre = par_name,
+         sensibility = res_s,
+         elasticity = res_e,
+         sortie = rep(paste0("S", sortie_), length(res_s)))
+  
+  oat_index = rbind(oat_index, tibble_sortie_i)
+}
+
+res  = oat_index[2:nrow(oat_index),]
+
+nature_par <- c(rep("démographiques",10),rep("épidémiques",5))
+
+s1 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S1"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S1")+ theme(legend.position = "none")
+
+s2 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S2"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S2")+ theme(legend.position = "none")
+
+s3 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S3"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S3")+ theme(legend.position = "none")
+
+s4 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S4"), aes(x = sensibility, y=elasticity, label=parametre, 
+                                                        col = nature_par))+
+  labs(title="S4")+ theme(legend.position = "none")
+```
+
+
+```{r}
+plot_grid(plotlist = list(s1, s2, s3, s4),ncol=2)
 ```
 
 
@@ -349,11 +464,12 @@ for (i in 1:nbOfPlots) {
   show(plots[[i]])
 }
 ```
-### 3. Analyse de sensibilité avec la méthode Morris
+
+
+### 3. Méthode Morris
 
 ```{r}
 
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
 lowerValues = ValNominale*.75
 upperValues = ValNominale*1.25
 
@@ -434,15 +550,11 @@ plot_grid(
 
 #### 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
 
-### 4. Analyse de sensibilité globale avec la méthode FAST
+### 4. Méthode FAST
 
 #### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
 
 #### 4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?
-
-```{r}
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
-```
 
 
 ```{r}

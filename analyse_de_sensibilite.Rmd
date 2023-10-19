@@ -35,8 +35,7 @@ ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019,
                 0.0019, 0.0082, 5, 1/365, 1/365, 
                 0.3, 1/5, 1/20, 1/100, 0.001)
 
-par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee",
-             "t1", "t2", "trans", "lat", "rec", "loss", "madd")
+par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "trans", "lat", "rec", "loss", "madd")
 ```
 
 
@@ -214,65 +213,51 @@ Les hypothèses de modélisations principales liées à la dynamique épidémiol
   
 #### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
+```{r}
+scenario_initial <- matrix(ValNominale, nrow = 1, ncol = 15)
 
-scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
+matrice_effectif <- modAppli_effectif(scenario_initial)
 
-res = modAppli1(scenario_initial)
+effectif_par_sante = tibble(
+  temps = 1:(2 * 365),
+  S = matrice_effectif[4,1, ],
+  L = matrice_effectif[4,2, ],
+  I = matrice_effectif[4,3, ],
+  R = matrice_effectif[4,4, ],
+  N = colSums(matrice_effectif[4,1:4, ]),
+  ) %>%
+  pivot_longer(cols = c(S, L, I, R, N), names_to = "Etat", values_to = "Effectif")
 
-
-effectif_data = tibble(
-       temps = 1:(2*365),
-       
-       S = res[[2]][4,1,],
-       L = res[[2]][4,2,],
-       I = res[[2]][4,3,],
-       R = res[[2]][4,4,],
-       
-       N = S + L + I + R,
-       
-       C1 = res[[2]][1,1,] + res[[2]][1,2,] + res[[2]][1,3,] + res[[2]][1,4,],
-       C2 = res[[2]][2,1,] + res[[2]][2,2,] + res[[2]][2,3,] + res[[2]][2,4,],
-       C3 = res[[2]][3,1,] + res[[2]][3,2,] + res[[2]][3,3,] + res[[2]][3,4,]
-       )
-```
-
-
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
-
-
-p1 = ggplot() +
-  geom_line(data = effectif_data, aes(x = temps, y = S, color = "1- Susceptible"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = L, color = "2- Latent"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = I, color = "3- Infectious"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = R, color = "4- Recovered"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = N, color = "Population Size"), linewidth = 1) +
-  labs(x = "Time", y = "Effectif") +
-  theme_minimal() +
-  ggtitle("Evolution of Epidemic stages - Initial Model")
-
-effectif_data2 <- tibble(effectif = 
-                           c(effectif_data$C1,
-                             effectif_data$C2,
-                             effectif_data$C3),
-                         temps = rep(effectif_data$temps, times = 3))  %>%
-  mutate(age_class = rep(c("First Age Class", "Second Age Class", "Third Age Class"), each = nrow(effectif_data) )) %>% 
+effectif_par_age = tibble(
+  temps = 1:(2 * 365),
+  C1 = colSums(matrice_effectif[1,1:4,]),
+  C2 = colSums(matrice_effectif[2,1:4,]),
+  C3 = colSums(matrice_effectif[3,1:4,]),
+  ) %>%
+  pivot_longer(cols = starts_with("C"), names_to = "age_class", values_to = "Effectif") %>%
   group_by(temps, age_class) %>%
-  summarise(n = sum(effectif)) %>%
+  summarise(n = sum(Effectif)) %>%
   mutate(percentage = n / sum(n))
+  
 
-p2 = ggplot(effectif_data2, aes(x=temps, y=percentage, fill=age_class)) + 
-    geom_area(alpha=0.4 , size=1, colour="black")+
-  labs(fill = "Age class") +
-  labs(x = "Time", y = "Effectif") +
+# Plot 1 : evolution de la dynamique epidemique
+plot1 <- ggplot(effectif_par_sante, aes(x = temps, y = Effectif, color = Etat)) +
+  geom_line(size = 1) +
+  labs(x = "Temps", y = "Effectif") +
+  theme_minimal() +
+  ggtitle("Evolution de la dynamique épidémique - modèle initial")
+
+# plot 2 : evolution de la strucutre d'age
+plot2 <- ggplot(effectif_par_age,aes(x = temps, y = percentage, fill = age_class)) +
+  geom_area(alpha = 0.4, size = 1, colour = "black") +
+  labs(x = "Temps", y = "Effectif", fill = "Classe d'âge") +
   theme_minimal() +
   ggtitle("Evolution of age structure - Initial Model")
 
-
-p1
-p2
-
+plot1
+plot2
 ```
+
 
 ### 2. Méthode OAT
 #### 2.A Justifiez les valeurs testées

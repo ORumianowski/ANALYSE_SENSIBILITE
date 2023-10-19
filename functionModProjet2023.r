@@ -6,7 +6,7 @@ library(tidyverse)
 ### Le modèle est ici défini sous forme de fonction pour faciliter vos analyses de sensibilité (AS)
 ### La fonction renvoie les sorties ponctuelles qui sont à analyser dans l'AS
 
-modAppli1 <- function(parametre){  
+modAppli_effectif <- function(parametre){  
   # cette version de modAppli retourne MAT et les nouvelles infections plutot que
   # les 4 sorties
   # CONDITIONS DE SIMULATION
@@ -76,7 +76,7 @@ modAppli1 <- function(parametre){
     
   }# fin boucle scenarios AS
   
-  return(list(nouvellesInfections, MAT))
+  return(MAT)
 } # fin fonction du modele
 
 # END

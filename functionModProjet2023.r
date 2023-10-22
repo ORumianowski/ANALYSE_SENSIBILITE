@@ -150,13 +150,13 @@ modAppli <- function(parametre){
     }# fin boucle temps
     
     # sorties ponctuelles à analyser
-    # XX
+    # Prévalence = nb d'individus latents + nb d'infectieux / nombre total d'individu à la fin de la période d'étude
     sortie1 <- (MAT[4,2,temps]+MAT[4,3,temps])/sum(MAT[4,,temps])
-    # xx
+    # Incidence = nombre de nouvelles infections le dernier jour de la période d'étude
     sortie2 <- nvinf[temps]
-    # xx
+    # Pic de l'épidémie : nombre d'individus infectés maximal atteint durant la période d'étude
     sortie3 <- max(MAT[4,3,1:temps])
-    # xx
+    # Nombre d'infection totale réalisé la première année
     sortie4 <- sum(nvinf[1:365])
     
     sorties[i,1] <- sortie1;

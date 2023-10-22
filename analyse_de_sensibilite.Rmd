@@ -25,6 +25,7 @@ library(ggpubr)
 library(sensitivity)
 library(dplyr)
 library(cowplot)
+
 source(file = "functionModProjet2023.r")
 ```
 
@@ -39,9 +40,9 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
 ```
 
 
-### 1. Description du modèle
+# 1. Description du modèle
 
-#### 1.A. Définissez le type de ce modèle
+## 1.A. Définissez le type de ce modèle
   
    Le modèle est :
    
@@ -51,7 +52,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieux. 
   
-#### 1.B. Quels sont les processus biologiques en jeu ?
+## 1.B. Quels sont les processus biologiques en jeu ?
   
   Le grand processus biologique modélisé est une **épidémie**.
   
@@ -70,7 +71,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   En plus des états de santé, la population est structuré en classe d'âge ayant un taux de mortalité et de fertilité propre. 
 
   
-#### 1.C. Ecrivez les équations associées
+## 1.C. Ecrivez les équations associées
   
  Pour la classe d'âge 1 (enfant)
   $$\left\{ 
@@ -129,14 +130,77 @@ $\mu$ : taux de mortalité due à la maladie
 
   
 
-#### 1.D. Fournissez le schéma des transitions entre états concordant avec ces équations
+## 1.D. Fournissez le schéma des transitions entre états concordant avec ces équations
   
-  ![Texte alternatif](image/transition_stade_epidemie.png){width=50%}
-  ![Texte alternatif](image/transition_classe_age.png){width=50%}
+  ![Texte alternatif](image/schema_projet_mepi.PNG){width=50%}
 
-=> 1 seul schema avec tout
+
   
-#### 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
+```{r}
+# Charger le package diagrammeR
+library(DiagrammeR)
+
+# Créer un graphique SEIR
+graph <- create_graph() %>%
+  
+  # Nœud pour la première classe d'âge
+  add_node("S1", label = "S1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
+  add_node("S2", label = "S2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
+  add_node("S3", label = "S3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
+  
+  add_node("E1", label = "E1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
+  add_node("E2", label = "E2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
+  add_node("E3", label = "E3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
+  
+  add_node("I1", label = "I1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
+  add_node("I2", label = "I2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
+  add_node("I3", label = "I3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
+  
+  add_node("R1", label = "R1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
+  add_node("R2", label = "R2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
+  add_node("R3", label = "R3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
+  
+  # Arêtes pour les transitions
+  # transition entre classe d'âge 1 et 2
+  add_edge(from="S1", to="S2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
+  add_edge(from="E1", to="E2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
+  add_edge(from="I1", to="I2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
+  add_edge(from="R1", to="R2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
+  
+  # transition entre classe d'âge 2 et 3
+  add_edge(from="S2", to="S3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
+  add_edge(from="E2", to="E3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
+  add_edge(from="I2", to="I3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
+  add_edge(from="R2", to="R3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
+
+  # transition entre état de santé
+  add_edge(from="S1", to="E1", edge_aes = edge_aes(label = "trans", color = "black")) %>%
+  add_edge(from="E1", to="I1", edge_aes = edge_aes(label = "lat", color = "black")) %>%
+  add_edge(from="I1", to="R1", edge_aes = edge_aes(label = "rec", color = "black")) %>%
+  add_edge(from="R1", to="S1", edge_aes = edge_aes(label = "loss", color = "black")) %>%
+  
+  add_edge(from="S2", to="E2", edge_aes = edge_aes(label = "trans", color = "black")) %>%
+  add_edge(from="E2", to="I2", edge_aes = edge_aes(label = "lat", color = "black")) %>%
+  add_edge(from="I2", to="R2", edge_aes = edge_aes(label = "rec", color = "black")) %>%
+  add_edge(from="R2", to="S2", edge_aes = edge_aes(label = "loss", color = "black")) %>%
+  
+  add_edge(from="S3", to="E3", edge_aes = edge_aes(label = "trans", color = "black")) %>%
+  add_edge(from="E3", to="I3", edge_aes = edge_aes(label = "lat", color = "black")) %>%
+  add_edge(from="I3", to="R3", edge_aes = edge_aes(label = "rec", color = "black")) %>%
+  add_edge(from="R3", to="S3", edge_aes = edge_aes(label = "loss", color = "black"))
+ 
+  # Rajouter le titre
+  #add_global(
+  #  graph_title = "Modèle SEIR avec Classes d'Âge",
+ #   graph_title_location = "top" )
+
+# Afficher le graphique
+render_graph(graph)
+
+```
+
+  
+## 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
   
 
 Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations:
@@ -160,7 +224,7 @@ Les hypothèses de modélisations principales liées à la dynamique épidémiol
   
   
   
-#### 1.F. Quelles sont les conditions initiales ?
+## 1.F. Quelles sont les conditions initiales ?
 
   Les conditions initiales du modèle sont :
   27 individus sensibles de classe d'âge 1,
@@ -168,52 +232,54 @@ Les hypothèses de modélisations principales liées à la dynamique épidémiol
   36 individus sensibles de classe d'âge 3 et
   1 individus infecté et infectieux de classe d'âge 3.
   
-#### 1.G. Listez et définissez les sorties possibles du modèle
+## 1.G. Listez et définissez les sorties possibles du modèle
   
   Les sorties proposés sont :
   
-  1- la proportion de malades i.e. infectés (infectieux ou non) à la fin de la période d'étude (deux ans)
+  1 - La **prévalence à la fin de la période d'étude**, c'est à dire le nombre totale d'individus infectés (latents et infectieux) divisé par la taille de la population le dernier jour de la période d'étude.
   
-  2- le nombre d'infection réalisées le dernier jour de la période d'étude
+  2 - L'**incidence de la maladie à la fin de la période d'étude**, soit le nombre de nouvelles infections réalisées le dernier jour de la période d'étude. 
   
-  3- le nombre maximum de d'infectés pendant la période d'étude
+  3 - Le **pic épidémique**, mesuré par le nombre d'individus infectieux maximal atteint pendant la période d'étude
   
-  4- le nombre d'infection réalisés pendant la première année de l'étude
+  4 - Le **nombre d'infection totale réalisé la première année** de l'étude
   
   D'autres sorties possibles du modèle peuvent être :
   
-  5- la proportion maximale de malades pendant la période d'étude
+  5 - La prévalence ou l'incidence maximale atteinte
   
-  6- le nombre d'individus sensibles à la fin de la période d'étude
+  6 - La prévalence ou l'incidence moyenne sur la période d'étude
   
-#### 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
+  7 - Le nombre d'individus sensibles à la fin de la période d'étude
   
-  K : Capacité de l'environnment. Valeur au-dessus de laquelle la population ne produit plus de portée.
+## 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
+  
+  K : Capacité de charge de l'environnment, i.e. taille maximal de la population. Si cette valeur est atteinte la population ne produit plus de portée.
   
   sr : Sex-ratio (proportion de femelles)
   
   portee : taille des portées
   
-  m_i : mortalité naturelle dans la classe d'âge i
+  m_i : taux de mortalité naturelle dans la classe d'âge i
   
-  f_i : fécondité de la classe i
+  f_i : taux de fécondité de la classe d'âge i
   
-  t_i : probabilité de partir de la classe d'âge i pour rentrer dans la classe i+1
+  t_i : taux de transition de la classe d'âge i à la classe i+1
   
-  trans : probabilité d'infection (quitter le groupe des sensibles pour devenir infecté/non-infectieux)
+  trans : taux d'infection (transition de sensible à latent, infecté/non-infectieux)
   
-  lat : probabilité de devenir contagieux (quitter le groupe des infectés/non-infectieux pour devenir infectés/infectieux)
+  lat : taux de latence, c'est l'inverse du temps de latence (transition de l'état latent à l'état infectés/infectieux)
   
-  rect: probabilité de guérir (quitter le groupe des infectés/infectieux pour devenir guéri/non-sensible)
+  rect: taux de récupération (transition de l'état infecté/infectieux à retiré)
   
-  loss : probalitité de perte d'immunité (quitter le groupe des guéri/non-sensible pour redevenir sensible)
+  loss : taux de perte d'immunité (transition de l'état retiré à sensible)
   
-  madd : probabilité de mourir pendant le stade infectés/infectieux
+  madd : taux de mortalité lié à la maladie, soit uniquement pendant à l'état infectés/infectieux
   
   
-#### 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
+## 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
 
-```{r}
+```{r comportement du modele, warning=FALSE, message=FALSE}
 scenario_initial <- matrix(ValNominale, nrow = 1, ncol = 15)
 
 matrice_effectif <- modAppli_effectif(scenario_initial)
@@ -259,13 +325,14 @@ plot2
 ```
 
 
-### 2. Méthode OAT
-#### 2.A Justifiez les valeurs testées
+# 2. Méthode OAT
+
+## 2.A Justifiez les valeurs testées
 
 Il a été fait le choix de faire varier uniformément chaque paramètre sur un intervalle avec 25% supérieure (respectivement inférieure) à la valeur nominale. L’analyse de sensibilité doit permettre d'évaluer les variations des sorties pour de faibles déviations de des paramètres. La valeur de 25% de variation nous paraît raisonnable pour chaque paramètre et a donc été choisie.
 
 
-#### 2.B. Fournissez votre script
+## 2.B. Fournissez votre script
   
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
 sensivity_oat = function(lx, ly){
@@ -451,7 +518,9 @@ for (i in 1:nbOfPlots) {
 ```
 
 
-### 3. Méthode Morris
+# 3. Méthode Morris
+
+## 3.a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
 
 ```{r}
 
@@ -468,8 +537,6 @@ Morris <- morris(model = modAppli,
                  bsup=upperValues)
 ```
 
-
-#### 3.a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
 
 ```{r}
 get_dfMorris <- function(Morris){
@@ -512,13 +579,13 @@ plotMorris <- function(mu.star_SX,sigma_SX,title="Analyse de Morris",parametersL
 
 dfMorris <- get_dfMorris(Morris)
 plot_S1 <- plotMorris(mu.star_SX=dfMorris$mu.star_S1,sigma_SX=dfMorris$sigma_S1,
-                      title="Sortie : Nombre d'infectés le dernier jour")
+                      title="Sortie 1 : Prévalence à la fin de l'étude")
 plot_S2 <- plotMorris(mu.star_SX=dfMorris$mu.star_S2,sigma_SX=dfMorris$sigma_S2,
-                      title="Sortie : Nombre d'infection le dernier jour")
+                      title="Sortie 2 : Incidence à la fin de l'étude")
 plot_S3 <- plotMorris(mu.star_SX=dfMorris$mu.star_S3,sigma_SX=dfMorris$sigma_S3,
-                      title="Sortie : Nombre d'infectés sur les 2 annnées")
+                      title="Sortie 3 : Pic épidémique")
 plot_S4 <- plotMorris(mu.star_SX=dfMorris$mu.star_S4,sigma_SX=dfMorris$sigma_S4,
-                      title = "Sortie : Nombre d'infection la première année")
+                      title = "Sortie 4 : Nombre d'infection la première année")
 
 grid <- plot_grid(plotlist = list(plot_S1,plot_S2,plot_S3,plot_S4),ncol=2)
 
@@ -533,14 +600,13 @@ plot_grid(
 
 
 
-#### 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
+## 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
 
-### 4. Méthode FAST
+# 4. Méthode FAST
 
-#### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
+### 4.a. Identifiez et explicitez le package que vous utilisez pour cette analyse ; donnez les éléments les plus importants qui peuvent être modulés lors de cette analyse. Notamment, comment choisir le nombre de scénarios à réaliser ?
 
-#### 4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?
-
+### 4.b. Réalisez un premier échantillonnage avec peu de scénarios par paramètre (100). Combien cela fait-il de simulations au total ?
 
 ```{r}
 scenarios_par_param = 100
@@ -548,7 +614,7 @@ scenarios_par_param = 100
 q.arg4 <- Map(list, ValNominale * 0.75, ValNominale * 1.25)
 names(q.arg4) <- par_name
 
-Fast <- fast99(model = NULL, 
+Fast100 <- fast99(model = NULL, 
                  factors = par_name, 
                  n = scenarios_par_param,
                  q = rep("qunif", 15),
@@ -560,7 +626,8 @@ head(sample100)
 
 
 
-#### 4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.
+### 4.c. Sauvegardez le tableau obtenu et réalisez un graphique illustrant les variations des paramètres obtenues.
+
 ```{r}
 par(mfrow=c(2,2), mar = c(3, 3, 1, 1), cex.lab = 0.7, mgp = c(1.5, 0.5, 0))
 
@@ -576,15 +643,17 @@ for (i in 1:4){
 }
 ```
 
-#### 4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.
+### 4.d. Réalisez alors un second échantillonnage avec beaucoup de scénarios par paramètre (1000). De même, sauvegardez le tableau obtenu et illustrez graphiquement votre échantillonnage.
+
 ```{r}
 scenarios_par_param = 1000
 
-Fast <- fast99(model = NULL, 
+Fast1000 <- fast99(model = NULL, 
                  factors = par_name, 
                  n = scenarios_par_param,
                  q = rep("qunif", 15),
                  q.arg =q.arg4)
+
 sample1000 = Fast$X
 ```
 
@@ -599,21 +668,26 @@ for (i in 1:4){
   abline(h=valueMin,col="red",lty=2)
   abline(h=valueMax,col="red",lty=2)
   
-  hist(sample100[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
+  hist(sample1000[,i],breaks = 100, main=paste("Répartition des valeurs pour",param))
 
 }
 ```
 
-#### 4.e. Comparez les deux échantillonnages et discutez des implications possibles.
+### 4.e. Comparez les deux échantillonnages et discutez des implications possibles.
+
 La différence principale entre les 2 échantillonages est que beaucoup plus de valeurs par paramètres sont représentées lorsqu'il y a plus de scénarios par paramètres. Par conséquent, on peut facilement imaginer que le nombre de combinaison de valeurs possibles est bien plus grand dans le cas à 1000 scénarios. A priori, plus de scenarios devraient donc donner de meilleurs estimations sur la sensibilité des paramètres, mais demandera aussi un temps de computation plus élevé.
 
-#### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
+### 4.f. Lancez le modèle sur ces deux échantillonnages en sauvegardant bien à chaque fois les valeurs des sorties dans chaque cas.
+
 ```{r}
-fast100 = modAppli(sample100)
-#fast1000 = modAppli(sample1000)
+result_fast100 = modAppli(sample100)
+result_fast1000 = modAppli(sample1000)
+
+head(result_fast100)
 ```
 
-#### 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
+## 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
+
 ```{r}
 par(mfrow=c(2,2), cex.lab = 0.8,cex.main = 0.9)
 title = paste("Distribution pour la sortie",
@@ -623,25 +697,45 @@ title = paste("Distribution pour la sortie",
                 "4 \n (nombre d'infection la première année)"
                 ))
 for (i in 1:4){
-  hist(sample100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=500)
+  hist(result_fast100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100)
 }
 
 ```
-On observe 2 types de distributions : distribution fortement centrée autour d'une valeur moyenne (sortie 1) et distribution plus ou moins uniforme (sortie 2 et 4). La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Une distribution centrée indique que les variations des paramètres d'entrée ont peu d'impact sur la valeur de la sortie. Au contraire, une distribution uniforme indique que les variations des paramètres d'entrée ont un effet important sur les valeurs de la sortie. Les sorties ayant ce type de distribution devraient donc être plus pertinentes pour comprendre quels paramètres d'entrée ont un effet sur la variabilité des sorties. 
+
+On observe 2 types de distributions : 
+
+- distribution fortement centrée autour d'une valeur moyenne (sortie 1), proche d'une distribution normale,
+
+- distribution plus ou moins uniforme (sortie 2 et 4), qui s'éloigne d"une distribution normale. 
+
+La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Pour faire l'analyse de variance, l'hypothèse de normalité de la distribution s'applique. Les sorties 2 et 4 ne pourront donc pas être utilisé dans ce cadre pour calculer les indices de sensibilité. La sortie 1 et 3 se rapproche assez d'une distribution normale pour que l'on puisse les garder.
+
+Seules les sorties 1 et 3, correpondant à la prévalence le dernier jour de l'étude et au nombre maximal d'individus infectés atteint, seront donc interpréter par la suite. 
 
 
-#### 4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.
+### 4.h. Pour les sorties interprétables, calculez les indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux) et visualisez graphiquement les résultats.
 
 ```{r}
-#tell(fast100)
+# on garde uniquement les sortie interprétables
+result_fast100 = result_fast100[,c(1,3)]
+result_fast1000 = result_fast1000[,c(1,3)]
+
+# calcule des indices de sensibilité avec tell()
+indice_sensibilite_100 = tell(Fast100,result_fast100)
+indice_sensibilite_1000 = tell(Fast100,result_fast100)
+
+indice_sensibilite_100
 ```
 
 
-#### 4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?
+### 4.i. Comparez les résultats des deux échantillonnages : qu’en concluez-vous ?
 
-#### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.
 
-### 5. Discussion
-####Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
+
+
+### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.
+
+# 5. Discussion
+## Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
 
 

@@ -31,7 +31,6 @@ source(file = "functionModProjet2023.r")
 
 
 ```{r}
-
 ValNominale = c(100, 0.5, 0.0014, 0.00029, 0.0019, 
                 0.0019, 0.0082, 5, 1/365, 1/365, 
                 0.3, 1/5, 1/20, 1/100, 0.001)
@@ -42,7 +41,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
 
 # 1. Description du modèle
 
-## 1.A. Définissez le type de ce modèle
+### 1.A. Type de modèle
   
    Le modèle est :
    
@@ -52,15 +51,13 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieux. 
   
-## 1.B. Quels sont les processus biologiques en jeu ?
+### 1.B. Processus biologiques modélisés
   
-  Le grand processus biologique modélisé est une **épidémie**.
-  
-  Dans ce modèle, les individus sont groupés en quatre catégories selon le stade épidémique:  
+  Le grand processus biologique modélisé est une **épidémie**. Dans ce modèle, les individus sont groupés en quatre catégories selon le stade épidémique:  
   
   1- Les individus susceptibles, notés S. Ils sont susceptibles de se faire infecter. 
   
-  2- Les individus exposés (infectés/non-infectieux), notés E ou L. Ils sont dans un état latent dans lequel ils sont infectés mais pas encore contagieux.
+  2- Les individus exposés (infectés/non-infectieux), notés E. Ils sont dans un état latent dans lequel ils sont infectés mais pas encore contagieux.
   
   3- Les individus infectés/infectieux, notés I. Ils sont infectés et contagieux. Cette classe a un risque de mortalité additionnel lié à la maladie.
   
@@ -68,10 +65,10 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   Ce modèle est donc un modèle SEIRS/SLIRS (Susceptible-Exposé/Latent-Infecté-Retiré-Susceptible). Les processus biologiques représentés à travers ce modèle correspondent aux transitions entre les états et sont la **transmission** de la maladie, le temps de **latence** entre l'exposition et l'état infectieux, la **mortalité due à la maladie** ou la **récupération/immunisation** après la maladie, et la **perte d'immunité**. A ces processus liés à la maladie s'ajoute des processus démographiques : **natalité** et **mortalité naturelle** (hors maladie). 
   
-  En plus des états de santé, la population est structuré en classe d'âge ayant un taux de mortalité et de fertilité propre. 
+  En plus des états de santé, la population est structurée en classe d'âge ayant un taux de mortalité et de fertilité propre. 
 
   
-## 1.C. Ecrivez les équations associées
+### 1.C. Equations décrivant le modèle
   
  Pour la classe d'âge 1 (enfant)
   $$\left\{ 
@@ -130,101 +127,36 @@ $\mu$ : taux de mortalité due à la maladie
 
   
 
-## 1.D. Fournissez le schéma des transitions entre états concordant avec ces équations
+### 1.D. Schéma des transitions entre états
   
-  ![Texte alternatif](image/schema_projet_mepi.PNG){width=50%}
+  ![Texte alternatif](image/schema_projet_mepi.PNG){width=80%}
 
 
-  
-```{r}
-# Charger le package diagrammeR
-library(DiagrammeR)
 
-# Créer un graphique SEIR
-graph <- create_graph() %>%
+### 1.E. Hypothèses du modèle
   
-  # Nœud pour la première classe d'âge
-  add_node("S1", label = "S1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
-  add_node("S2", label = "S2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
-  add_node("S3", label = "S3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "lightblue")) %>%
-  
-  add_node("E1", label = "E1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
-  add_node("E2", label = "E2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
-  add_node("E3", label = "E3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "orange")) %>%
-  
-  add_node("I1", label = "I1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
-  add_node("I2", label = "I2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
-  add_node("I3", label = "I3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "red")) %>%
-  
-  add_node("R1", label = "R1", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
-  add_node("R2", label = "R2", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
-  add_node("R3", label = "R3", node_aes = node_aes(shape = "rectangle", style = "filled", fillcolor = "green")) %>%
-  
-  # Arêtes pour les transitions
-  # transition entre classe d'âge 1 et 2
-  add_edge(from="S1", to="S2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
-  add_edge(from="E1", to="E2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
-  add_edge(from="I1", to="I2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
-  add_edge(from="R1", to="R2", edge_aes = edge_aes(label = "t1", color = "black")) %>%
-  
-  # transition entre classe d'âge 2 et 3
-  add_edge(from="S2", to="S3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
-  add_edge(from="E2", to="E3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
-  add_edge(from="I2", to="I3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
-  add_edge(from="R2", to="R3", edge_aes = edge_aes(label = "t2", color = "black")) %>%
 
-  # transition entre état de santé
-  add_edge(from="S1", to="E1", edge_aes = edge_aes(label = "trans", color = "black")) %>%
-  add_edge(from="E1", to="I1", edge_aes = edge_aes(label = "lat", color = "black")) %>%
-  add_edge(from="I1", to="R1", edge_aes = edge_aes(label = "rec", color = "black")) %>%
-  add_edge(from="R1", to="S1", edge_aes = edge_aes(label = "loss", color = "black")) %>%
-  
-  add_edge(from="S2", to="E2", edge_aes = edge_aes(label = "trans", color = "black")) %>%
-  add_edge(from="E2", to="I2", edge_aes = edge_aes(label = "lat", color = "black")) %>%
-  add_edge(from="I2", to="R2", edge_aes = edge_aes(label = "rec", color = "black")) %>%
-  add_edge(from="R2", to="S2", edge_aes = edge_aes(label = "loss", color = "black")) %>%
-  
-  add_edge(from="S3", to="E3", edge_aes = edge_aes(label = "trans", color = "black")) %>%
-  add_edge(from="E3", to="I3", edge_aes = edge_aes(label = "lat", color = "black")) %>%
-  add_edge(from="I3", to="R3", edge_aes = edge_aes(label = "rec", color = "black")) %>%
-  add_edge(from="R3", to="S3", edge_aes = edge_aes(label = "loss", color = "black"))
+Plusieurs hypothèses sont sous-jacentes à ce modèle. Elles concernent la dynamique des populations:
+
+  - Le modèle suppose qu'une division de la population en trois classes d'âge (Enfant, Adulte, Senior) représente la structure de la population. 
+ - L'appartenance à une classe d'âge est l'unique déterminant du **taux de mortalité** des individus.
+ - De même pour le taux de **fécondité**. De plus, la classe d'âge 1 ne se reproduit pas et absolument tous les individus des classes d'âge 2 et 3 peuvent se reproduire.
+ - La **taille de la population** n'est pas nécessairement constante, en revanche elle possède une valeur maximale noté K.
+ - Le modèle ne prend pas en compte l'**immigration ou l'émigration** de la population. Elle est considérée **fermée**.
  
-  # Rajouter le titre
-  #add_global(
-  #  graph_title = "Modèle SEIR avec Classes d'Âge",
- #   graph_title_location = "top" )
-
-# Afficher le graphique
-render_graph(graph)
-
-```
-
-  
-## 1.E. Listez les hypothèses principales de ce modèle (quel type de force d’infection, population variable ou constante, etc)
-  
-
-Dans la construction du modèle, plusieurs hypothèses sont faites. Elles concernent la dynamique des populations:
-
-
- - tous les individus peuvent se reproduire (absense de sexes)
- - les variations interindividuelles ne propriétés des individus ne dépendent que de leur classe d'âge
-    - la probabilité de se reproduire et le taille des portées ne dépendent que de la classe d'âge
-    - le succès de reproduction dépend de la densité de population uniquement à travers une capacité de l'environnment noté K
-    - le probalité intrasèque de mortalité (non-spécifique à une maladie) ne dépend que de la classe d'âge
- - les processus de migration sont négligés i.e. la population est considérée comme fermée
-
-
-Les hypothèses de modélisations principales liées à la dynamique épidémiologique sont :
+Les hypothèses de modélisations liées à la dynamique épidémiologique sont :
  
- - les propriétés épidémiologiques des individus sont identiques pour les individus, notamment qu'ils ne dépendent pas de la classe d'âge.
- - l'épidémie est structuré en quatre groupes: les sensibles, les latents, les infectieux et les guéris.
- - les paramètres épidémiologiques restent invariant au cours du temps e.g. absence d'évolution de l'agent infectieux et de l'hôte / absense de saisonalité 
+ - La **transmission est fréquence-dépendante**. La probabilité de transmission dépend du nombre total de personnes infectées dans la population, quelle que soit leur densité. Cela suggère que la transmission dépend de la fréquence des rencontres entre individus infectés et susceptibles, plutôt que de la densité de la population.
+ - Les paramètres épidémiologiques sont les mêmes pour tous les individus, et par extension pour toutes les classes d'âge.
+ 
+ - Il existe **4 états de santé** possibles : sensibles, latents, infectieux et guéris.
+ 
+ - Les **paramètres épidémiologiques ne varient pas**. Il n'y a pas d'évolution de l'agent infectieux ou de l'hôte, ni de saisonalité dans la dynamique épidémique. 
+ 
+ - La transmission est équiprobables quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure dépendantes de l'âge dans les contacts entre individus. 
 
   
-  
-  
-  
-## 1.F. Quelles sont les conditions initiales ?
+### 1.F. Conditions initiales
 
   Les conditions initiales du modèle sont :
   27 individus sensibles de classe d'âge 1,
@@ -232,7 +164,8 @@ Les hypothèses de modélisations principales liées à la dynamique épidémiol
   36 individus sensibles de classe d'âge 3 et
   1 individus infecté et infectieux de classe d'âge 3.
   
-## 1.G. Listez et définissez les sorties possibles du modèle
+  
+### 1.G. Sorties possibles du modèle
   
   Les sorties proposés sont :
   
@@ -252,32 +185,33 @@ Les hypothèses de modélisations principales liées à la dynamique épidémiol
   
   7 - Le nombre d'individus sensibles à la fin de la période d'étude
   
-## 1.H. Listez les paramètres du modèle, donnez leurs définitions et leurs valeurs
   
-  K : Capacité de charge de l'environnment, i.e. taille maximal de la population. Si cette valeur est atteinte la population ne produit plus de portée.
+### 1.H. Paramètres du modèle
+
+  - K : Capacité de charge de l'environnment, i.e. taille maximal de la population. Si cette valeur est atteinte la population ne produit plus de portée. 
   
-  sr : Sex-ratio (proportion de femelles)
+  - sr : Sex-ratio (proportion de femelles) 
   
-  portee : taille des portées
+  - portee : taille des portées 
   
-  m_i : taux de mortalité naturelle dans la classe d'âge i
+  - m_i : taux de mortalité naturelle dans la classe d'âge i 
   
-  f_i : taux de fécondité de la classe d'âge i
+  - f_i : taux de fécondité de la classe d'âge i 
   
-  t_i : taux de transition de la classe d'âge i à la classe i+1
+  - t_i : taux de transition de la classe d'âge i à la classe i+1 
   
-  trans : taux d'infection (transition de sensible à latent, infecté/non-infectieux)
+  - trans : taux d'infection (transition de sensible à latent, infecté/non-infectieux)
   
-  lat : taux de latence, c'est l'inverse du temps de latence (transition de l'état latent à l'état infectés/infectieux)
+  - lat : taux de latence, c'est l'inverse du temps de latence (transition de l'état latent à l'état infectés/infectieux)
   
-  rect: taux de récupération (transition de l'état infecté/infectieux à retiré)
+  - rect: taux de récupération (transition de l'état infecté/infectieux à retiré)
   
-  loss : taux de perte d'immunité (transition de l'état retiré à sensible)
+  - loss : taux de perte d'immunité (transition de l'état retiré à sensible)
   
-  madd : taux de mortalité lié à la maladie, soit uniquement pendant à l'état infectés/infectieux
+  - madd : taux de mortalité lié à la maladie, soit uniquement pendant à l'état infectés/infectieux
   
   
-## 1.I. Réalisez quelques figures pour illustrer au mieux le comportement du modèle pour les valeurs nominales des paramètres
+### 1.I. Comportement du modèle pour les valeurs nominales des paramètres
 
 ```{r comportement du modele, warning=FALSE, message=FALSE}
 scenario_initial <- matrix(ValNominale, nrow = 1, ncol = 15)
@@ -287,12 +221,19 @@ matrice_effectif <- modAppli_effectif(scenario_initial)
 effectif_par_sante = tibble(
   temps = 1:(2 * 365),
   S = matrice_effectif[4,1, ],
-  L = matrice_effectif[4,2, ],
+  E = matrice_effectif[4,2, ],
   I = matrice_effectif[4,3, ],
   R = matrice_effectif[4,4, ],
   N = colSums(matrice_effectif[4,1:4, ]),
   ) %>%
-  pivot_longer(cols = c(S, L, I, R, N), names_to = "Etat", values_to = "Effectif")
+  pivot_longer(cols = c(S, E, I, R, N), names_to = "Etat", values_to = "Effectif")
+
+effectif_par_sante$Etat = effectif_par_sante$Etat %>% 
+  as.factor() %>%
+  relevel("R") %>%
+  relevel("I") %>%
+  relevel("E") %>%
+  relevel("S") 
 
 effectif_par_age = tibble(
   temps = 1:(2 * 365),
@@ -318,7 +259,7 @@ plot2 <- ggplot(effectif_par_age,aes(x = temps, y = percentage, fill = age_class
   geom_area(alpha = 0.4, size = 1, colour = "black") +
   labs(x = "Temps", y = "Effectif", fill = "Classe d'âge") +
   theme_minimal() +
-  ggtitle("Evolution of age structure - Initial Model")
+  ggtitle("Evolution de la dynamique démographique")
 
 plot1
 plot2
@@ -327,23 +268,17 @@ plot2
 
 # 2. Méthode OAT
 
-## 2.A Justifiez les valeurs testées
+### 2.A Les valeurs testées
 
-Il a été fait le choix de faire varier uniformément chaque paramètre sur un intervalle avec 25% supérieure (respectivement inférieure) à la valeur nominale. L’analyse de sensibilité doit permettre d'évaluer les variations des sorties pour de faibles déviations de des paramètres. La valeur de 25% de variation nous paraît raisonnable pour chaque paramètre et a donc été choisie.
+Pour trouver les valeurs testées par paramètre, il s'agit d'un compromis entre avoir une gamme de variabilité assez grande pour pouvoir en tirer des indices de sensibilité, mais pas trop grande non plus pour ne pas avoir des valeurs trop éloignées de la réalité qui perdrait leur sens biologique. Une gamme de variabilité trop importante fausserait les analyses puisqu'elle pourrait induire des comportements imprévisibles du modèle. Et il ne faut pas oublier que l’analyse de sensibilité doit permettre d'évaluer les variations des sorties pour de faibles déviations de valeurs des paramètres.
+
+Il a été fait le choix de faire varier uniformément chaque paramètre entre + ou - 25% de sa valeur nominale. Ainsi, les valeurs obtenues restent assez proches pour avoir un sens biologique et une modélisation fiable mais l'intervalle est assez grand pour calculer des indices de sensibilité. 
 
 
-## 2.B. Fournissez votre script
+### 2.B. Script pour la méthode OAT
   
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
-sensivity_oat = function(lx, ly){
-  diff_y = max(ly) - min(ly)
-  diff_x = max(lx) - min(lx)
-  return(diff_y/diff_x)
-}
 
-elascitiy_oat = function(lx, ly){
-  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
-}
 ```
 
 
@@ -358,7 +293,7 @@ makeAnalyseOAT <- function(ValNominale){
 createMatriceForOAT <- function(ValNominale){
   nbParametres = length(ValNominale)
   nbScenariosParParam = 11
-  nbScenariosTotal = nbScenariosParParam*nbParametres
+  nbScenariosTotal = nbScenariosParParam * nbParametres
   valeurMin = ValNominale * 0.75
   valeurMax = ValNominale * 1.25
 
@@ -379,10 +314,8 @@ normaliseSortie <- function(sortie,ValNominale){
                     nb_max_infec = sortie[,3]/sortieNominale[,3],
                     nb_infec_year1 = sortie[,4]/sortieNominale[,4]))
 }
-```
 
 
-```{r, warning=FALSE, message=FALSE, include=TRUE}
 resultParam_i = function(i,sortieNormalise,matrixScenario){
   
   nbScenariosParParam = 11
@@ -395,38 +328,17 @@ resultParam_i = function(i,sortieNormalise,matrixScenario){
                              nb_infec_year1=sortieNormalise[i_min:i_max,4])
   
   return(resultParam_i)
-  
 }
-```
 
 
-```{r, warning=FALSE, message=FALSE, include=TRUE}
-plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
-  
-  resultParam_i = resultParam_i(i,sortieNormalise,matrixScenario)
-  
-    p1 = ggplot() +
-      geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
-      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infected_end, color = "S2"), size = 1) +
-      geom_line(data = resultParam_i, aes(x = parametre, y = nb_max_infec,  color = "S3"), size = 1) +
-      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infec_year1,  color = "S4"), size = 1) +
-      scale_x_continuous(trans='log10') +
-      labs(x = "Parameter value", y = "Relative variation") +
-      theme_minimal() +
-      ggtitle(par_name[i])
-    
-      res_plot2 = tibble(group=rep(c("S1", "S2", "S3", "S4"), each=length(resultParam_i$prop_inf)),
-                         value = c(resultParam_i$prop_inf,
-                                  resultParam_i$nb_infected_end,
-                                  resultParam_i$nb_max_infec,
-                                  resultParam_i$nb_infec_year1))
-    
-        p2 = ggplot()+
-          geom_boxplot(data=res_plot2, aes(y=value, fill = group))
-        
-        p3 = ggarrange(p1, p2, ncol = 2, nrow = 1)
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
 
-    return(p3)
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
 }
 
 ```
@@ -435,20 +347,7 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
 matriceOAT = createMatriceForOAT(ValNominale)
 sortieNormalise = makeAnalyseOAT(ValNominale)
-head(sortieNormalise)
-```
 
-
-
-
-
-```{r, warning=FALSE, message=FALSE, include=TRUE}
-plotOATAnalysis(i=5,sortieNormalise,matriceOAT)
-
-```
-
-
-```{r}
 oat_index= tibble(parametre = NaN,
             sensibility = NaN,
             elasticity = NaN,
@@ -482,39 +381,80 @@ res  = oat_index[2:nrow(oat_index),]
 nature_par <- c(rep("démographiques",10),rep("épidémiques",5))
 
 s1 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S1"), aes(x = sensibility, y=elasticity, label=parametre, 
-                                                        col = nature_par))+
+  geom_text(data = res %>% subset(., sortie=="S1"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
   labs(title="S1")+ theme(legend.position = "none")
 
 s2 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S2"), aes(x = sensibility, y=elasticity, label=parametre, 
-                                                        col = nature_par))+
+  geom_text(data = res %>% subset(., sortie=="S2"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
   labs(title="S2")+ theme(legend.position = "none")
 
 s3 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S3"), aes(x = sensibility, y=elasticity, label=parametre, 
-                                                        col = nature_par))+
+  geom_text(data = res %>% subset(., sortie=="S3"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
   labs(title="S3")+ theme(legend.position = "none")
 
 s4 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S4"), aes(x = sensibility, y=elasticity, label=parametre, 
-                                                        col = nature_par))+
+  geom_text(data = res %>% subset(., sortie=="S4"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
   labs(title="S4")+ theme(legend.position = "none")
-```
 
-
-```{r}
 plot_grid(plotlist = list(s1, s2, s3, s4),ncol=2)
 ```
 
 
 ```{r, warning=FALSE, message=FALSE}
+plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
+  
+  resultParam_i = resultParam_i(i,sortieNormalise,matrixScenario)
+  
+    p1 = ggplot() +
+      geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infected_end, color = "S2"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_max_infec,  color = "S3"), size = 1) +
+      geom_line(data = resultParam_i, aes(x = parametre, y = nb_infec_year1,  color = "S4"), size = 1) +
+      scale_x_continuous(trans='log10') +
+      labs(x = "Parameter value", y = "Relative variation") +
+      theme_minimal() +
+      ggtitle(par_name[i]) +
+      theme(legend.justification=c(1,0), legend.position=c(1,0.75),
+            legend.key.width=unit(0.1, "cm"),legend.key.height=unit(0.1,"cm"),
+            legend.title = element_text(size=6),legend.text = element_text(size=6),
+            axis.text = element_text(size = 5),axis.title = element_text(size = 5))
+    
+      res_plot2 = tibble(sortie=rep(c("S1", "S2", "S3", "S4"), each=length(resultParam_i$prop_inf)),
+                         value = c(resultParam_i$prop_inf,
+                                  resultParam_i$nb_infected_end,
+                                  resultParam_i$nb_max_infec,
+                                  resultParam_i$nb_infec_year1))
+    
+      p2 = ggplot()+
+      geom_boxplot(data=res_plot2, aes(y=value, fill = sortie))+
+      theme(legend.justification=c(1,0), legend.position=c(1,0.75),
+            legend.key.width=unit(0.1, "cm"),legend.key.height=unit(0.1,"cm"),
+            legend.title = element_text(size=6),legend.text = element_text(size=6),
+            axis.text = element_text(size = 5),axis.title = element_text(size = 5))
+
+        
+      p3 = ggarrange(p1, p2, ncol = 2, nrow = 1)
+
+    return(p3)
+}
+
+
 plots <- list()
 nbOfPlots <- 15
 for (i in 1:nbOfPlots) {
   plots[[i]] <- plotOATAnalysis(i, sortieNormalise, matriceOAT)
-  show(plots[[i]])
+  #show(plots[[i]])
 }
+
+plot_grid(plotlist=plots[1:3])
+plot_grid(plotlist=plots[4:6])
+plot_grid(plotlist=plots[7:9])
+plot_grid(plotlist=plots[10:12])
+plot_grid(plotlist=plots[13:15])
 ```
 
 
@@ -535,10 +475,7 @@ Morris <- morris(model = modAppli,
                  design = list(type = "oat", levels = 6, grid.jump = 3),
                  binf=lowerValues,
                  bsup=upperValues)
-```
 
-
-```{r}
 get_dfMorris <- function(Morris){
   # Cette fonction sert à récupérer mu, mu* et sigma pour chaque sortie du modèle sous 
   # la forme d'un data frame
@@ -602,7 +539,6 @@ plot_grid(
   ncol = 1,
   rel_heights = c(0.1, 1)
 )
-
 ```
 
 
@@ -704,7 +640,7 @@ title = paste("Distribution pour la sortie",
                 "4 \n (nombre d'infection la première année)"
                 ))
 for (i in 1:4){
-  hist(result_fast100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100,col="darkblue")
+  hist(result_fast100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100,col="black")
 }
 
 ```
@@ -715,7 +651,7 @@ On observe 2 types de distributions :
 
 - distribution plus ou moins uniforme (sortie 2 et 4), qui s'éloigne d"une distribution normale. 
 
-La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Pour faire l'analyse de variance, l'hypothèse de normalité de la distribution s'applique. Les sorties 2 et 4 ne pourront donc pas être utilisé dans ce cadre pour calculer les indices de sensibilité. La sortie 1 et 3 se rapproche assez d'une distribution normale pour que l'on puisse les garder.
+La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Pour faire l'analyse de variance, l'hypothèse de normalité de la distribution s'applique. Les sorties 2 et 4 ne pourront donc pas être utilisées dans ce cadre pour calculer les indices de sensibilité. La sortie 1 et 3 se rapprochent assez d'une distribution normale pour que l'on puisse les garder.
 
 Seules les sorties 1 et 3, correpondant à la prévalence le dernier jour de l'étude et au nombre maximal d'individus infectés atteint, seront donc interpréter par la suite. 
 
@@ -739,7 +675,7 @@ plot.fast99 <- function(x, ylim = c(0, 1), main = NULL, names.arg = NULL, ...) {
   colnames(S) <- colnames(x$X)
   bar.col <- c("darkblue","darkred")
   barplot(S, ylim = ylim, col = bar.col, main = main, names.arg = names.arg,cex.names=.43)
-  legend("topright", c("main effect", "interactions"), fill = bar.col, cex=0.6)
+  legend("topright", c("Effet principal", "Interactions"), fill = bar.col, cex=0.6)
 }
 
 

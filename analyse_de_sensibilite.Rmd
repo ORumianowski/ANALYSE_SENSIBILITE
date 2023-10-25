@@ -567,6 +567,12 @@ plotMorris <- function(mu.star_SX,sigma_SX,title="Analyse de Morris",parametersL
   Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
   
   plot <- ggplot(data=NULL,aes(x=mu.star_SX,y=sigma_SX,col=Parametres)) +
+    geom_rect(aes(fill = Parametres),
+              xmin = -Inf, xmax = 0.1, ymin = -Inf, ymax = Inf, alpha = 0.3, fill="lightyellow") +
+    geom_rect(aes(fill = Parametres),
+              xmin = 0.1, xmax = Inf, ymin = -Inf, ymax = 0.1, alpha = 0.3, fill="orange") +
+    geom_rect(aes(fill = Parametres),
+              xmin = 0.1, xmax = Inf, ymin = 0.1, ymax = Inf, alpha = 0.3, fill="lightcyan") +
     geom_text(aes(label=parametersList),size=2) +
     scale_color_manual(values = c("darkblue","darkred")) +
     xlab(label="mu*") +
@@ -576,6 +582,7 @@ plotMorris <- function(mu.star_SX,sigma_SX,title="Analyse de Morris",parametersL
     theme(text = element_text(size = 6))
   return(plot)
 }
+
 
 dfMorris <- get_dfMorris(Morris)
 plot_S1 <- plotMorris(mu.star_SX=dfMorris$mu.star_S1,sigma_SX=dfMorris$sigma_S1,
@@ -620,7 +627,7 @@ Fast100 <- fast99(model = NULL,
                  q = rep("qunif", 15),
                  q.arg =q.arg4)
 
-sample100 = Fast$X
+sample100 = Fast100$X
 head(sample100)
 ```
 
@@ -654,7 +661,7 @@ Fast1000 <- fast99(model = NULL,
                  q = rep("qunif", 15),
                  q.arg =q.arg4)
 
-sample1000 = Fast$X
+sample1000 = Fast1000$X
 ```
 
 
@@ -697,7 +704,7 @@ title = paste("Distribution pour la sortie",
                 "4 \n (nombre d'infection la première année)"
                 ))
 for (i in 1:4){
-  hist(result_fast100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100)
+  hist(result_fast100[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100,col="darkblue")
 }
 
 ```
@@ -717,14 +724,34 @@ Seules les sorties 1 et 3, correpondant à la prévalence le dernier jour de l'�
 
 ```{r}
 # on garde uniquement les sortie interprétables
-result_fast100 = result_fast100[,c(1,3)]
-result_fast1000 = result_fast1000[,c(1,3)]
+sortie_interpetable = c(1,3)
 
-# calcule des indices de sensibilité avec tell()
-indice_sensibilite_100 = tell(Fast100,result_fast100)
-indice_sensibilite_1000 = tell(Fast100,result_fast100)
+# on calcule des indices de sensibilité avec tell()
+indice_sensibilite_100 <- lapply(sortie_interpetable, function(i) tell(Fast100, result_fast100[, i]))
+indice_sensibilite_1000 <- lapply(sortie_interpetable, function(i) tell(Fast1000, result_fast1000[, i]))
+```
 
-indice_sensibilite_100
+
+```{r}
+# On fait une visualisation graphiquem
+plot.fast99 <- function(x, ylim = c(0, 1), main = NULL, names.arg = NULL, ...) {
+  S <- rbind(x$D1 / x$V, 1 - x$Dt / x$V - x$D1 / x$V)
+  colnames(S) <- colnames(x$X)
+  bar.col <- c("darkblue","darkred")
+  barplot(S, ylim = ylim, col = bar.col, main = main, names.arg = names.arg,cex.names=.43)
+  legend("topright", c("main effect", "interactions"), fill = bar.col, cex=0.6)
+}
+
+
+par(mfrow=c(2,2), cex.main=0.7, mar=c(2, 3, 2, 2), cex.axis=0.6)
+plot.fast99(indice_sensibilite_100[[1]], main="Analyse FAST avec 100 scénarios par paramètre \n (résulat pour la sortie 1)")
+
+plot.fast99(indice_sensibilite_100[[2]], main="Analyse FAST avec 100 scénarios par paramètre \n (résulat pour la sortie 3)")
+
+plot.fast99(indice_sensibilite_1000[[1]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 1)")
+
+plot.fast99(indice_sensibilite_1000[[2]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 3)")
+
 ```
 
 

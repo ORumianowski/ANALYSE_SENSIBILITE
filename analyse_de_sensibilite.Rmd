@@ -25,6 +25,8 @@ library(ggpubr)
 library(sensitivity)
 library(dplyr)
 library(cowplot)
+library(knitr)
+library(kableExtra)
 
 source(file = "functionModProjet2023.r")
 ```
@@ -141,18 +143,15 @@ Plusieurs hypothèses sont sous-jacentes à ce modèle. Elles concernent la dyna
   - Le modèle suppose qu'une division de la population en trois classes d'âge (Enfant, Adulte, Senior) représente la structure de la population. 
  - L'appartenance à une classe d'âge est l'unique déterminant du **taux de mortalité** des individus.
  - De même pour le taux de **fécondité**. De plus, la classe d'âge 1 ne se reproduit pas et absolument tous les individus des classes d'âge 2 et 3 peuvent se reproduire.
- - La **taille de la population** n'est pas nécessairement constante, en revanche elle possède une valeur maximale noté K.
+ - La **taille de la population** n'est pas nécessairement constante et possède une croissance logistique. La population possède donc une taille maximale constante., notée K
  - Le modèle ne prend pas en compte l'**immigration ou l'émigration** de la population. Elle est considérée **fermée**.
  
 Les hypothèses de modélisations liées à la dynamique épidémiologique sont :
  
  - La **transmission est fréquence-dépendante**. La probabilité de transmission dépend du nombre total de personnes infectées dans la population, quelle que soit leur densité. Cela suggère que la transmission dépend de la fréquence des rencontres entre individus infectés et susceptibles, plutôt que de la densité de la population.
  - Les paramètres épidémiologiques sont les mêmes pour tous les individus, et par extension pour toutes les classes d'âge.
- 
  - Il existe **4 états de santé** possibles : sensibles, latents, infectieux et guéris.
- 
  - Les **paramètres épidémiologiques ne varient pas**. Il n'y a pas d'évolution de l'agent infectieux ou de l'hôte, ni de saisonalité dans la dynamique épidémique. 
- 
  - La transmission est équiprobables quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure dépendantes de l'âge dans les contacts entre individus. 
 
   
@@ -188,29 +187,31 @@ Les hypothèses de modélisations liées à la dynamique épidémiologique sont 
   
 ### 1.H. Paramètres du modèle
 
-  - K : Capacité de charge de l'environnment, i.e. taille maximal de la population. Si cette valeur est atteinte la population ne produit plus de portée. 
-  
-  - sr : Sex-ratio (proportion de femelles) 
-  
-  - portee : taille des portées 
-  
-  - m_i : taux de mortalité naturelle dans la classe d'âge i 
-  
-  - f_i : taux de fécondité de la classe d'âge i 
-  
-  - t_i : taux de transition de la classe d'âge i à la classe i+1 
-  
-  - trans : taux d'infection (transition de sensible à latent, infecté/non-infectieux)
-  
-  - lat : taux de latence, c'est l'inverse du temps de latence (transition de l'état latent à l'état infectés/infectieux)
-  
-  - rect: taux de récupération (transition de l'état infecté/infectieux à retiré)
-  
-  - loss : taux de perte d'immunité (transition de l'état retiré à sensible)
-  
-  - madd : taux de mortalité lié à la maladie, soit uniquement pendant à l'état infectés/infectieux
-  
-  
+```{r}
+# Sample data
+parameters <- data.frame(
+  Nom = c("K","sr","m1", "m2", "m3", "f1", "f2", "portee", "1/t1, 1/t2", "trans", "1/lat", "1/rec", "1/loss", "madd"),
+  Description = c("Capacité de charge de l'environnment", "Sex-ratio", "Mortalité dans la classe d'âge 1",
+                  "Mortalité dans la classe d'âge 2","Mortalité dans la classe d'âge 3",
+                  "Taux de fertilité des classes d'âge 2", "Taux de fertilité des classes d'âge 3",
+                  "Taille des portées",
+                  "Temps passé dans la classe d'âge 1 et 2",
+                  "Taux de transmission", "Temps de latence", "Durée de la phase infectieuse",
+                  "Durée de l'immunité","Taux de mortalité additionnelle due à la maladie"),
+  Valeur = c("100", "0.5", "0.0014", "0.00029", "0.0019", "0.0019", "0.0082", "5", 
+             "365 jours", "0.3", "5 jours", "20 jours", "100 jours", "0.001")
+)
+
+# Create the table
+parameter_table <- kable(parameters, "html") %>%
+  kable_styling(full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)  # Make the first column (Name) bold
+
+parameter_table
+
+```
+
+
 ### 1.I. Comportement du modèle pour les valeurs nominales des paramètres
 
 ```{r comportement du modele, warning=FALSE, message=FALSE}
@@ -275,21 +276,9 @@ Pour trouver les valeurs testées par paramètre, il s'agit d'un compromis entre
 Il a été fait le choix de faire varier uniformément chaque paramètre entre + ou - 25% de sa valeur nominale. Ainsi, les valeurs obtenues restent assez proches pour avoir un sens biologique et une modélisation fiable mais l'intervalle est assez grand pour calculer des indices de sensibilité. 
 
 
-### 2.B. Script pour la méthode OAT
-  
-```{r, warning=FALSE, message=FALSE, include=TRUE}
-
-```
-
+### 2.B. Application de la méthode OAT
 
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
-makeAnalyseOAT <- function(ValNominale){
-  sortie = createMatriceForOAT(ValNominale) %>%
-    modAppli() %>%
-    normaliseSortie(ValNominale)
-  return(sortie)
-}
-
 createMatriceForOAT <- function(ValNominale){
   nbParametres = length(ValNominale)
   nbScenariosParParam = 11
@@ -316,7 +305,16 @@ normaliseSortie <- function(sortie,ValNominale){
 }
 
 
-resultParam_i = function(i,sortieNormalise,matrixScenario){
+matriceOAT = createMatriceForOAT(ValNominale)
+sortieOAT = matriceOAT %>% modAppli()
+sortieNormalise = sortieOAT %>% normaliseSortie(ValNominale)
+```
+
+
+### 2.C. Visualisation graphique des résultats
+
+```{r, warning=FALSE, message=FALSE}
+get_resultParam_i = function(i,sortieNormalise,matrixScenario){
   
   nbScenariosParParam = 11
   i_min = nbScenariosParParam*(i-1)+1
@@ -331,83 +329,9 @@ resultParam_i = function(i,sortieNormalise,matrixScenario){
 }
 
 
-sensivity_oat = function(lx, ly){
-  diff_y = max(ly) - min(ly)
-  diff_x = max(lx) - min(lx)
-  return(diff_y/diff_x)
-}
-
-elascitiy_oat = function(lx, ly){
-  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
-}
-
-```
-
-
-```{r, warning=FALSE, message=FALSE, include=TRUE}
-matriceOAT = createMatriceForOAT(ValNominale)
-sortieNormalise = makeAnalyseOAT(ValNominale)
-
-oat_index= tibble(parametre = NaN,
-            sensibility = NaN,
-            elasticity = NaN,
-            sortie = NaN)
-
-for (sortie_ in 1:4){
-  
-  res_s = c()
-  res_e = c()
-  for (i_ in 1:15){
-    resultParam_i_ = resultParam_i(i=i_,sortieNormalise,matriceOAT)
-    
-    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
-    res_s = c(res_s, res_i)
-    
-    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
-    res_e = c(res_e, res_i)
-  }
-  
-  tibble_sortie_i = tibble(
-         parametre = par_name,
-         sensibility = res_s,
-         elasticity = res_e,
-         sortie = rep(paste0("S", sortie_), length(res_s)))
-  
-  oat_index = rbind(oat_index, tibble_sortie_i)
-}
-
-res  = oat_index[2:nrow(oat_index),]
-
-nature_par <- c(rep("démographiques",10),rep("épidémiques",5))
-
-s1 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S1"), 
-            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
-  labs(title="S1")+ theme(legend.position = "none")
-
-s2 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S2"), 
-            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
-  labs(title="S2")+ theme(legend.position = "none")
-
-s3 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S3"), 
-            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
-  labs(title="S3")+ theme(legend.position = "none")
-
-s4 = ggplot()+
-  geom_text(data = res %>% subset(., sortie=="S4"), 
-            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
-  labs(title="S4")+ theme(legend.position = "none")
-
-plot_grid(plotlist = list(s1, s2, s3, s4),ncol=2)
-```
-
-
-```{r, warning=FALSE, message=FALSE}
 plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
   
-  resultParam_i = resultParam_i(i,sortieNormalise,matrixScenario)
+  resultParam_i = get_resultParam_i(i,sortieNormalise,matrixScenario)
   
     p1 = ggplot() +
       geom_line(data = resultParam_i, aes(x = parametre, y = prop_inf, color = "S1"), size = 1) +
@@ -415,7 +339,7 @@ plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
       geom_line(data = resultParam_i, aes(x = parametre, y = nb_max_infec,  color = "S3"), size = 1) +
       geom_line(data = resultParam_i, aes(x = parametre, y = nb_infec_year1,  color = "S4"), size = 1) +
       scale_x_continuous(trans='log10') +
-      labs(x = "Parameter value", y = "Relative variation") +
+      labs(x = "Valeur du paramètre", y = "Variation relative") +
       theme_minimal() +
       ggtitle(par_name[i]) +
       theme(legend.justification=c(1,0), legend.position=c(1,0.75),
@@ -450,20 +374,179 @@ for (i in 1:nbOfPlots) {
   #show(plots[[i]])
 }
 
-plot_grid(plotlist=plots[1:3])
-plot_grid(plotlist=plots[4:6])
-plot_grid(plotlist=plots[7:9])
-plot_grid(plotlist=plots[10:12])
+plot_grid(plotlist=plots[1:4])
+plot_grid(plotlist=plots[5:8])
+plot_grid(plotlist=plots[9:12])
 plot_grid(plotlist=plots[13:15])
 ```
 
 
+Nous allons calculer 2 indices pour mesurer la sensibilité à partir des sorties du modèle selon les paramètres d'entrée : 
+
+- La **sensibilité** : mesure de l'impact d'une variation absolue d'un paramètre sur les résultats du modèle.
+
+- L'**élasticité** (sensibilité relative) mesure de l'impact d'une variation relative d'un paramètre sur les résultats du modèle. Pour calculer l'élasticité, au lieu de mesurer les variations absolues, on mesure les variations relatives par rapport à la valeur nominale du paramètre. 
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
+
+
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
+}
+
+
+oat_index= tibble(parametre = NaN,
+            sensibility = NaN,
+            elasticity = NaN,
+            sortie = NaN)
+
+for (sortie_ in 1:4){
+  
+  res_s = c()
+  res_e = c()
+  for (i_ in 1:15){
+    resultParam_i_ = get_resultParam_i(i=i_,sortieOAT,matriceOAT)
+    
+    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_s = c(res_s, res_i)
+    
+    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_e = c(res_e, res_i)
+  }
+  
+  tibble_sortie_i = tibble(
+         parametre = par_name,
+         sensibility = res_s,
+         elasticity = res_e,
+         sortie = rep(paste0("S", sortie_), length(res_s)))
+  
+  oat_index = rbind(oat_index, tibble_sortie_i)
+}
+
+res  = oat_index[2:nrow(oat_index),]
+
+
+nature_par <- c(rep("démographiques",10),rep("épidémiques",5))
+
+s1 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S1"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
+  labs(title="S1")+ theme(legend.position = "none")
+
+s2 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S2"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
+  labs(title="S2")+ theme(legend.position = "none")
+
+s3 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S3"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
+  labs(title="S3")+ theme(legend.position = "none")
+
+s4 = ggplot()+
+  geom_text(data = res %>% subset(., sortie=="S4"), 
+            aes(x = sensibility, y=elasticity, label=parametre, col = nature_par))+
+  labs(title="S4")+ theme(legend.position = "none")
+
+plot_grid(plotlist = list(s1, s2, s3, s4),ncol=2)
+```
+
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
+
+
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
+}
+
+
+oat_index= tibble(parametre = NaN,
+            sensibility = NaN,
+            elasticity = NaN,
+            sortie = NaN)
+
+for (sortie_ in 1:4){
+  
+  res_s = c()
+  res_e = c()
+  for (i_ in 1:15){
+    resultParam_i_ = get_resultParam_i(i=i_,sortieOAT,matriceOAT)
+    
+    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_s = c(res_s, res_i)
+    
+    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_e = c(res_e, res_i)
+  }
+  
+  tibble_sortie_i = tibble(
+         parametre = par_name,
+         sensibility = res_s,
+         elasticity = res_e,
+         sortie = rep(paste0("S", sortie_), length(res_s)))
+  
+  oat_index = rbind(oat_index, tibble_sortie_i)
+}
+
+
+res  = oat_index[2:nrow(oat_index),]
+
+# Définir un facteur pour la variable "sortie"
+res$sortie <- factor(res$sortie, levels = c("S1", "S2", "S3", "S4"))
+
+# Creation de 2 barplots séparés pour la sensibilité et l'élasticité
+p <- ggplot(data = res, aes(x = parametre, y = sensibility, fill = parametre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Sensibilité", y = "Sensibilité") +
+  facet_wrap(~sortie, scales = "free") +  #
+  theme_minimal() +
+  theme(legend.position="none", 
+        axis.text.x = element_text(size = 6, angle = 60),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 6))
+
+p2 <- ggplot(data = res, aes(x = parametre, y = elasticity, fill = parametre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Elasticité", y = "Elasticité") +
+  facet_wrap(~sortie, scales="free_x") +  
+  theme_minimal() +
+  theme(legend.position="none", 
+        axis.text.x = element_text(size = 6, angle = 60),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 6))
+
+
+print(p)
+print(p2)
+```
+
+
+### 2.D. Interprétation des résultats
+
+En ce qui concerne la sensibilité, de nombreux paramètres semblent avoir un impact assez important sur les sorties du modèle. Les paramètres les plus impactants varient selon les sorties mais on peut tout de même lister les plus influents : le taux de perte d'immunité (loss), les taux de mortalité (m1, m2, m3), le taux de récupération (rec), et dans une moindre mesure les taux de fertilité (f1 et f2) et de passage entre classe (t1 et t2) pour certaines sorties. 
+
+Lorsque l'on regarde l'élasticité, qui est donc une sensibilité relative, les résultats sont assez différents et on note toujours l'importance du taux de perte d'immunité (loss) mais plus des taux de mortalité. Les paramètres les plus influents avec cet indice sont le taux de perte d'immunité (loss), la capacité de charge du milieu (K), le taux de récupération (rec) et le taux de transmission (trans). 
+
+
+Lorsqu'il s'agit d'analyser un modèle, l'utilisation de l'approche OAT standard se révèle être une méthode simple, peu coûteuse en simulations, et efficace pour les modèles linéaires. Cette méthode consiste à faire varier chaque entrée du modèle sur toute sa gamme de valeurs possibles, puis à évaluer l'effet de ces variations sur les sorties du modèle. Elle offre donc certains avantages, mais elle **ne tient pas compte des interactions** entre ces paramètres. C'est pourquoi nous allons faire d'autres analyses de sensibilité avec la méthode de Morris. Cette méthode est une sorte d'OAT dans laquelle l'exploration de l'espace des paramètres est différente : il est exploré en grille alors que dans la méthode OAT classique il était exploré en croix. Cela permet de prendre en compte les interactions entre paramètres. 
+
+
+
 # 3. Méthode Morris
 
-## 3.a. Fournissez une figure équivalente à celle donnée dans le cours et interprétez-la. 
+## 3.a. Application de la méthode et visualisation
 
 ```{r}
-
 lowerValues = ValNominale*.75
 upperValues = ValNominale*1.25
 
@@ -541,9 +624,32 @@ plot_grid(
 )
 ```
 
+Dans la figure ci-dessus, l'axe x représente les valeurs de $\mu_i^*$ qui est l'effet moyen du paramètres i, et mesure donc la sensibilité de ce paramètre. L'axe y représente $\sigma_i$ qui est l'écart-type de l’effet du facteur i, et mesure donc les interactions et les relations non linéaires. 
+
+Les différentes couleurs permettent de classer les paramètres d'entrée :
+  - En jaune : leur effet est négligeable.
+  - En orange : leur effet est linéaire et sans interaction.
+  - En bleu : leur effet est non linéaire et/ou avec interaction.
+
+Les seuils choisis pour définir les zones ne sont pas fournis avec le package sensitivity. Ils ont donc été choisi à 0.1, une valeur standard, mais il faut se rappeler que ce seuil n'est pas un critère absolue.   
+
+  
+### 3.B. Analyse des résultats et comparaison avec la méthode OAT
+
+Les résultats sont très variables selon les sorties, nous allons donc d'abord interpréter les résultats par sortie :
+  - Sortie 1 : toutes les valeurs de $\mu^*$ et $\sigma$ sont très faibles, les effets semblent négligeables pour tous les paramètres d'entrée. Les paramètres rec, loss, trans et lat se détachent tout de même du lot. 
+  - Sortie 2 : assez similirairement à la sortie 1, la plupart des effets semblent négligeables excepté pour K et loss qui aurait un effet linéaire.
+  - Sortie 3 : Au contraire des sorties précédentes, les paramètres semblent pour la plupart avoir des effets. Les plus influents étant rec, trans, K, lat, sr, portee et f3.
+  - Sortie 4 : Les conclusions sont assez similaires à la sortie 3, avec loss à ajouter parmi le groupe des paramètres les plus influents. 
+  
+Finalement, les paramètres les plus importants en terme de sensibilité semblent être : la capacité de charge (K), le taux de transmission (trans), le taux de guérison (rec), le temps de latence (lat), le taux de perte d'immunité (loss) et dans une moindre mesure certains paramètres liés à la natalité (sr, portee, f3). 
+
+Si on compare les 2 méthodes, on observe avec Morris de nombreux effets non-linéaire et/ou d'interraction qui n'était pas observables avec la méthode OAT. Néanmoins, les conclusions quant aux paramètres les plus inflents sont assez similaires avec ce qu'on observait lorsque l'on mesurait l'indice d'élasticité. La principale différence de ce point de vue est l'apparition des paramètres liés à la natalité (sr, portee, f3) parmi les paramètres influents. Or, si l'on regarde les graphes, on voit qu'ils ont une valeurs $\sigma$ plutôt grande mais une valeur $\mu^*$ moins importante. Leur effet est donc principalement lié à une interaction avec d'autres paramètres et/ou des effets non linéaires, ce qui explique pour la méthode OAT ne mettait pas en avant leur importance. 
 
 
-## 3. b. Qu’en concluez-vous si vous comparez les deux approches et les résultats obtenus ?
+Nous avons donc vu 2 méthodes qui semblent concorder de manière générale même si la première méthode montre des limites pour mesurer certains effets. Nous allons maintenant utiliser une 3e méthode qui repose sur une approche globale : la méthode FAST (Fourier Amplitude Sensitivity Test). Elle est fondée sur la décomposition de la variance, et présente l'avantage de ne nécessiter que des hypothèses minimales sur la forme du modèle, ce qui la rend applicable dans un large éventail de contextes. Une caractéristique importante du FAST est sa capacité à prendre en compte la nature continue des facteurs d'entrée, ainsi que les interactions entre ces facteurs. Cependant, il convient de noter que cette méthode peut être assez coûteuse en termes de nombre de simulations.
+
+
 
 # 4. Méthode FAST
 
@@ -626,7 +732,7 @@ La différence principale entre les 2 échantillonages est que beaucoup plus de 
 result_fast100 = modAppli(sample100)
 result_fast1000 = modAppli(sample1000)
 
-head(result_fast100)
+# head(result_fast100)
 ```
 
 ## 4.g. Visualisez la distribution des sorties obtenues : qu’en pensez-vous ? Quel impact dans le cadre d’une analyse de variance (telle que faite pour calculer les indices de sensibilité) ? Pouvez-vous donc interprétez toutes les sorties et pourquoi ?
@@ -676,6 +782,7 @@ plot.fast99 <- function(x, ylim = c(0, 1), main = NULL, names.arg = NULL, ...) {
   bar.col <- c("darkblue","darkred")
   barplot(S, ylim = ylim, col = bar.col, main = main, names.arg = names.arg,cex.names=.43)
   legend("topright", c("Effet principal", "Interactions"), fill = bar.col, cex=0.6)
+  abline(h=0.2, col = "gray", lty = 2)
 }
 
 

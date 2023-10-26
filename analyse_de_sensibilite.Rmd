@@ -794,7 +794,9 @@ plot.fast99(indice_sensibilite_1000[[2]], main="Analyse FAST avec 1000 scénario
 
 ### 4.i. Comparaison des résultats des 2 échantillonnages 
 
-Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. Dans tous les cas, on voit que la méthode FAST tend à surestimer l'effet des paramètres lorsqu'il y a peu de scénarios par paramètre
+Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. 
+
+Dans tous les cas, on voit que la méthode FAST tend à surestimer l'effet des paramètres lorsqu'il y a peu de scénarios par paramètre.
 
 
 ### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.

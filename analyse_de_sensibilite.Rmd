@@ -1,5 +1,5 @@
 ---
-title: "Analyse de sensibilité d'une modèle de propagation d'une épidémie - MEPI"
+title: "Analyse de sensibilité d'un modèle épidémiologique - MEPI"
 author : "Louis Schroll & Odin Rumianowski"
 date: "2023-10-05"
 style : spacelab
@@ -63,11 +63,11 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   3- Les individus infectés/infectieux, notés I. Ils sont infectés et contagieux. Cette classe a un risque de mortalité additionnel lié à la maladie.
   
-  4- Les individus rétablis/non-sensible, notés R. Ils ne sont plus contagieux ni susceptibles d'être infectés. Ils peuvent malgré tout perdre leur immunité et redevenir susceptibles. 
+  4- Les individus rétablis, notés R. Ils ne sont plus contagieux ni susceptibles d'être infectés. Ils peuvent malgré tout perdre leur immunité et redevenir susceptibles. 
   
-  Ce modèle est donc un modèle SEIRS/SLIRS (Susceptible-Exposé/Latent-Infecté-Retiré-Susceptible). Les processus biologiques représentés à travers ce modèle correspondent aux transitions entre les états et sont la **transmission** de la maladie, le temps de **latence** entre l'exposition et l'état infectieux, la **mortalité due à la maladie** ou la **récupération/immunisation** après la maladie, et la **perte d'immunité**. A ces processus liés à la maladie s'ajoute des processus démographiques : **natalité** et **mortalité naturelle** (hors maladie). 
+  Ce modèle est donc un modèle SEIRS/SLIRS (Susceptible-Exposé/Latent-Infecté-Retiré-Susceptible). Les processus biologiques représentés à travers ce modèle correspondent aux transitions entre les états et sont la **transmission** de la maladie, le temps de **latence** entre l'exposition et l'état infectieux, la **mortalité due à la maladie** ou la **récupération/immunisation** après la maladie, et la **perte d'immunité**. A ces processus liés à la maladie s'ajoutent des processus démographiques : **natalité** et **mortalité naturelle** (hors maladie). 
   
-  En plus des états de santé, la population est structurée en classe d'âge ayant un taux de mortalité et de fertilité propre. 
+  En plus des états de santé, la population est structurée en classe d'âge ayant un taux de mortalité et de fertilité propre. Le **veillissement** est donc un processus modélisé ici.
 
   
 ### 1.C. Equations décrivant le modèle
@@ -81,7 +81,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
      R_{1}(t+1)= R_{1}(t).(1-m_{1}-t_{1}-\xi)+I_{1}(t).\gamma
    \end{array}
   \right.$$
-  Pour la classe d'âge 2 (adulte)
+  Pour la classe d'âge 2 (jeune adulte)
   $$\left\{ 
   \begin{array}{ll}
   S_{2}(t+1)= S_{1}(t).t_{1} + S_{2}(t).(1-m_{2}-t_{2}-\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{2}(t) \\
@@ -90,7 +90,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
      R_{2}(t+1)= R_{1}(t).t_{1} + R_{2}(t).(1-m_{2}-t_{2}-\xi)+I_{2}(t).\gamma
    \end{array}
   \right.$$
-  Pour la classe d'âge 3 (senior)
+  Pour la classe d'âge 3 (adulte)
   $$ \left\{ 
   \begin{array}{ll}
   S_{3}(t+1)= S_{2}(t).t_{2} + S_{3}(t).(1-m_{3}\beta.\frac{\sum_{i=1}^{3}{I_{i}(t)}}{N(t)})+\xi.R_{3}(t) \\
@@ -131,7 +131,7 @@ $\mu$ : taux de mortalité due à la maladie
 
 ### 1.D. Schéma des transitions entre états
   
-  ![Texte alternatif](image/schema_projet_mepi.PNG){width=80%}
+  !(image/schema_projet_mepi.PNG){width=100%}
 
 
 
@@ -140,10 +140,10 @@ $\mu$ : taux de mortalité due à la maladie
 
 Plusieurs hypothèses sont sous-jacentes à ce modèle. Elles concernent la dynamique des populations:
 
-  - Le modèle suppose qu'une division de la population en trois classes d'âge (Enfant, Adulte, Senior) représente la structure de la population. 
+  - Le modèle suppose qu'une division de la population en trois classes d'âge représente la structure de la population. 
  - L'appartenance à une classe d'âge est l'unique déterminant du **taux de mortalité** des individus.
- - De même pour le taux de **fécondité**. De plus, la classe d'âge 1 ne se reproduit pas et absolument tous les individus des classes d'âge 2 et 3 peuvent se reproduire.
- - La **taille de la population** n'est pas nécessairement constante et possède une croissance logistique. La population possède donc une taille maximale constante., notée K
+ - De même pour le taux de **fécondité**. De plus, la classe d'âge 1 ne se reproduit pas et tous les individus des classes d'âge 2 et 3 peuvent se reproduire.
+ - La **taille de la population** n'est pas nécessairement constante et possède une croissance logistique. La population possède donc une taille maximale, notée K
  - Le modèle ne prend pas en compte l'**immigration ou l'émigration** de la population. Elle est considérée **fermée**.
  
 Les hypothèses de modélisations liées à la dynamique épidémiologique sont :
@@ -152,7 +152,7 @@ Les hypothèses de modélisations liées à la dynamique épidémiologique sont 
  - Les paramètres épidémiologiques sont les mêmes pour tous les individus, et par extension pour toutes les classes d'âge.
  - Il existe **4 états de santé** possibles : sensibles, latents, infectieux et guéris.
  - Les **paramètres épidémiologiques ne varient pas**. Il n'y a pas d'évolution de l'agent infectieux ou de l'hôte, ni de saisonalité dans la dynamique épidémique. 
- - La transmission est équiprobables quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure dépendantes de l'âge dans les contacts entre individus. 
+ - La transmission est équiprobables quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure de contact dépendantes de l'âge. 
 
   
 ### 1.F. Conditions initiales
@@ -557,11 +557,14 @@ plot_grid(
 Dans la figure ci-dessus, l'axe x représente les valeurs de $\mu_i^*$ qui est l'effet moyen du paramètres i, et mesure donc la sensibilité de ce paramètre. L'axe y représente $\sigma_i$ qui est l'écart-type de l’effet du facteur i, et mesure donc les interactions et les relations non linéaires. 
 
 Les différentes couleurs permettent de classer les paramètres d'entrée :
+
   - En jaune : leur effet est négligeable.
+  
   - En orange : leur effet est linéaire et sans interaction.
+  
   - En bleu : leur effet est non linéaire et/ou avec interaction.
 
-Les seuils choisis pour définir les zones ne sont pas fournis avec le package sensitivity. Ils ont donc été choisi à 0.1, une valeur standard, mais il faut se rappeler que ce seuil n'est pas un critère absolue.   
+Les seuils choisis pour définir les zones ne sont pas fournis avec le package sensitivity. Ils ont donc été choisi à 0.1, une valeur standard, mais il faut se rappeler que ce seuil n'est pas un critère absolu.   
 
   
 ### 3.B. Analyse des résultats et comparaison avec la méthode OAT
@@ -589,7 +592,7 @@ Nous avons donc vu 2 méthodes qui semblent concorder de manière générale mê
 
 ### 4.a. Package et nombre de simulations
 
-Nous allons utiliser la fonction fast99 du package sensitivity. Pour cette analyse, le choix du nombre de scénarios par paramètre dépend de nombreux facteurs comme le nombre de paramètres et la complexité du modèle, l'étendu de la gamme de variation des paramètres, la précision voulue ou encore les ressources disponibles en terme de puissance et temps de calcul. Dans notre situation le modèle n'est pas très complexe mais possède tout de même 15 paramètres ce qui est déjà beaucoup, nous recherchons une précision correcte mais pas elle ne nécessite pas non plus d'être extremement élevé et nous sommes limité en puissance de calcul. Ainsi, 1000 scénarios devraient suffire et être adapté dans notre cas. 
+Nous allons utiliser la fonction fast99 du package sensitivity. Pour cette analyse, le choix du nombre de scénarios par paramètre dépend de nombreux facteurs comme le nombre de paramètres et la complexité du modèle, l'étendu de la gamme de variation des paramètres, la précision voulue ou encore les ressources disponibles en terme de puissance et temps de calcul. Dans notre situation le modèle n'est pas extremement complexe mais possède tout de même 15 paramètres, nous recherchons une précision correcte mais nous n'avons pas besoin qu'elle soit extremement élevée et nous sommes limité en puissance de calcul. Ainsi, 1000 scénarios devraient suffire et être adapté dans notre cas. 
 
 
 
@@ -661,7 +664,7 @@ x = sample100[,11]
 y = sample100[,12]
 z = sample100[,13]
 
-plot_ly(x = x, y = y, z = z, type = "scatter3d", mode = "markers", color = "black")
+plot_ly(x = x, y = y, z = z, type = "scatter3d", mode = "markers")
 
 ```
 
@@ -794,14 +797,52 @@ plot.fast99(indice_sensibilite_1000[[2]], main="Analyse FAST avec 1000 scénario
 
 ### 4.i. Comparaison des résultats des 2 échantillonnages 
 
-Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. 
+Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. Pour la sortie 1, dans le cas d'un échantillonnage à 100 valeurs par paramètres, les variations de quasiment tous les paramètres ont l'air d'avoir un fort effet sur la valeur de la sortie, alors que dans le cas à 1000 scénarios par paramètre la plupart des paramètre ont un effet négligeable excepté rec et loss. Le cas à 1000 scénarios semblent plus proches des résultats obtenus avec l'analyse de Morris. Pour la sortie 3, les paramètres dont la variation a un effet sur la valeur en sortie sont les mêmes à 100 et à 1000 scénarios mais les effets estimés sont beacoup plus faibles dans le second cas. 
 
-Dans tous les cas, on voit que la méthode FAST tend à surestimer l'effet des paramètres lorsqu'il y a peu de scénarios par paramètre.
+Finalement lorsque le nombre de scénarios par paramètre est faible, on a l'impression que la méthode FAST tend à surestimer leur effet sur les valeurs des sorties.
 
 
-### 4.j. Interprétez biologiquement le cas à 1000 scénarios par paramètre.
+### 4.j. Interprétation du cas à 1000 scénarios par paramètre
+
+La prévalence à la fin de l'étude (sortie 1) montre une sensibilité importante au taux de guérison (rec, 56%) et de perte d'immunité (loss, 38%), autrement dit à la durée de la période d'infection et à la durée d'immunisation. Les autres paramètres ont un effet négligeable. Le nombre maximal d'individus infecté au cours des 2 ans, ou pic épidémique (sortie 3) est très sensible au taux de transmission (trans, 29%) et de récupération (rec, 57%), et dans une moindre mesure à la capacité de charge (K) et au temps de latence.
+
+
 
 # 5. Discussion
-## Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
+### Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
+
+Le tableau suivant récapitule les résultats pour chaque méthode et chaque sortie. A chaque fois, les paramètres ont été classé selon la force de leur effet principal et les paramètres dont l'effet était négligeable n'ont pas été recensés. 
+
+```{r}
+parameters <- data.frame(
+  Méthode = c("Sortie 1","Sortie 2","Sortie 3", "Sortie 4"),
+  OAT = c("rec, loss, trans, lat", "K, loss, trans, portee, 
+          sr, f3", "rec, trans, lat, K", "K, loss, trans, f3, sr, portee"),
+  Morris = c("rec?, loss?", "K, loss", "rec, trans, K, 
+             lat, f3, portee, sr", "K, loss, trans, portee, 
+             sr, f3, rec, m3, lat"),
+  FAST = c("rec, loss", " ", "rec, trans, K, lat", " ")
+)
+
+parameter_table <- kable(parameters, "html") %>%
+  kable_styling(full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)  
+
+parameter_table
+
+```
+
+On voit clairement que les analyses donnent des résultats similaires. Cette concordance semble indiquer qu'il y a peu d"effet d'interraction et non linéaires dans le modèle, et que finalement même une analyse peu sophistiquée comme l'OAT aurait donné des résultats probants. 
+
+La poursuite des analyses serait très dépendante de la question posée et de l'objectif de l'étude mais voici quelques possibilités :
+  
+  - Se concentrer sur une meilleure estimation des paramètres influents, afin d'avoir de meilleures prédictions,
+  
+  - Simplifier le modèle en se basant sur les paramètres peu influents,
+  
+  - Au contraire, complexifier le modèle au niveau des paramètres les plus influents, 
+  
+  - Produire des scénarios de prédiction en se concentrant sur la variation des paramètres les plus influents. 
+
 
 

@@ -139,7 +139,6 @@ $\mu$ : taux de mortalité due à la maladie
 
 ### 1.E. Hypothèses du modèle
   
-
 Plusieurs hypothèses sont sous-jacentes à ce modèle. Elles concernent la dynamique des populations:
 
   - Le modèle suppose qu'une division de la population en trois classes d'âge représente la structure de la population. 
@@ -329,10 +328,7 @@ get_resultParam_i = function(i,sortieNormalise,matrixScenario){
   
   return(resultParam_i)
 }
-```
 
-
-```{r, warning=FALSE, message=FALSE}
 plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
   
   resultParam_i = get_resultParam_i(i,sortieNormalise,matrixScenario)
@@ -843,6 +839,8 @@ La poursuite des analyses serait très dépendante de la question posée et de l
   - Au contraire, complexifier le modèle au niveau des paramètres les plus influents, 
   
   - Produire des scénarios de prédiction en se concentrant sur la variation des paramètres les plus influents. 
+  
+  
 
 # 6. Introduction d'une variation au modèle
 
@@ -850,13 +848,14 @@ La poursuite des analyses serait très dépendante de la question posée et de l
 
 ### 6.A.a. Choix de la nouvelle caractéristique épidémique modélisée
 
-Un caractéristique importante des certaines épidémies est leur apparition saisonnière dans les populations.  Nous avons fait le choix de complexifier le modèle en introduisant une variation périodique du taux de transmission. Pour cela, au sein du modèle, le paramètre  Trans varie de 0 au double de sa valeur nominale avec une variation sinusoïdale:
+Un caractéristique importante de certaines maladies est leur apparition saisonnière dans les populations. Nous avons fait le choix de complexifier le modèle en introduisant une variation périodique du taux de transmission. Pour cela, au sein du modèle, le paramètre  trans varie de 0 au double de sa valeur nominale avec une variation sinusoïdale:
 
 $$ trans’ = trans \times (1 + sin(φ + w\times t)) $$ 
 avec $$ φ = 0, w = 2pi/periode, periode = 365 $$
 
 
 ```{r}
+# Fonction pour calculer le taux de transmission sur l'année
  trans_saisonnalité = function(trans, t, periode = 365){
       
       w=2*pi/periode
@@ -864,21 +863,14 @@ avec $$ φ = 0, w = 2pi/periode, periode = 365 $$
       
       return(trans_)
     }
-```
 
-```{r}
 
+# Visualisation de la variation du taux de transmission
 trans = 0.3
 
 trans_plot = tibble(time = 1:(365)*2) %>% 
   mutate(trans = trans_saisonnalité(trans=trans, time, periode = 365))
 
-
-```
-
-```{r}
-
-library(ggplot2)
 
 p = ggplot()+
   geom_point(data = trans_plot, aes(x= time, y= trans))+
@@ -994,7 +986,7 @@ modAppli1 <- function(parametre){
 
 ### 6.A.b. Effet de la variation du modèle sur les stades épidémiques
 
-Après avoir déterminé les effectifs de chaque stade épidémique avec cette introduction de la saisonnalité (fig. ci-dessous), on remarque que la dynamique épidémique est très différente. Dans ce nouveau modèle, il y a une succession de vagues épidémiques. La période de ces vagues est égale à la période de variation du taux de transmission i.e. une année.
+Après avoir déterminé les effectifs de chaque stade épidémique avec cette introduction de la saisonnalité (fig. ci-dessous), on remarque que la dynamique épidémique est très différente. Dans ce nouveau modèle, il y a une succession de vagues épidémiques. La période de ces vagues est égale à une année, la période de variation du taux de transmission.
 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
@@ -1008,30 +1000,31 @@ effectif_data = tibble(
        temps = 1:(2*365),
        
        S = res[[2]][4,1,],
-       L = res[[2]][4,2,],
+       E = res[[2]][4,2,],
        I = res[[2]][4,3,],
        R = res[[2]][4,4,],
        
-       N = S + L + I + R,
+       N = S + E + I + R,
        
        C1 = res[[2]][1,1,] + res[[2]][1,2,] + res[[2]][1,3,] + res[[2]][1,4,],
        C2 = res[[2]][2,1,] + res[[2]][2,2,] + res[[2]][2,3,] + res[[2]][2,4,],
        C3 = res[[2]][3,1,] + res[[2]][3,2,] + res[[2]][3,3,] + res[[2]][3,4,]
        )
-```
+
+effectif_data = effectif_data[1:6] %>%
+  pivot_longer(cols = c(S, E, I, R, N), names_to = "Etat", values_to = "Effectif")
+
+effectif_data$Etat = effectif_data$Etat %>% 
+  as.factor() %>%
+  relevel("R") %>%
+  relevel("I") %>%
+  relevel("E") %>%
+  relevel("S") 
 
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
-
-
-p1 = ggplot() +
-  geom_line(data = effectif_data, aes(x = temps, y = S, color = "S"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = L, color = "E"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = I, color = "I"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = R, color = "R"), linewidth = 1) +
-  geom_line(data = effectif_data, aes(x = temps, y = N, color = "N"), linewidth = 1) +
+p1 = ggplot(data = effectif_data, aes(x = temps, y = Effectif, color = Etat)) +
+  geom_line(linewidth = 1) +
   labs(x = "Temps", y = "Effectif") +
-  labs(color = "Etat") +
   theme_minimal() +
   ggtitle("Evolution de la dynamique épidémique - modèle avec saisonnalité")
 
@@ -1045,7 +1038,7 @@ p1
 La saisonnalité de la dynamique épidémique pourrait avoir un un effet important sur la prévalence et l’incidence de la maladie. Afin d’évaluer cet aspect, nous introduisons deux nouvelles sorties au modèle l'incidence moyenne sur la période d’étude et la prévalence par année, noté respectivement  sortie 5 et sortie 6.
 
 ```{r}
-modAppli <- function(parametre){  
+modAppli_saison <- function(parametre){  
   # Version donn?e par les profs
   # CONDITIONS DE SIMULATION
   temps = 2*365; # nb de pas de temps (en jours)
@@ -1078,13 +1071,7 @@ modAppli <- function(parametre){
     
     
     #Prise en compte de la saisonnalité de la force de contagion
-    trans_saisonnalité = function(trans, t, periode = 365){
-      
-      w=2*pi/periode
-      trans_ = trans * (1 + sin(0 + w*t))
-      
-      return(trans_)
-    }
+    trans_saison = trans_saisonnalité()
     
     
     # INITIALISATION
@@ -1095,7 +1082,7 @@ modAppli <- function(parametre){
     MAT[2,1,1] <- 23; # nombre d'adulte sains
     MAT[3,1,1] <- 36; # nombre de seniors sains
     MAT[3,3,1] <- 1;  # nombre de seniors infectes
-    # effectifs par ?tat de sant?
+    # effectifs par etat de sante
     MAT[4,1,1] <- sum(MAT[1:3,1,1]); MAT[4,2,1] <- sum(MAT[1:3,2,1]); MAT[4,3,1] <- sum(MAT[1:3,3,1]); MAT[4,4,1] <- sum(MAT[1:3,4,1]);
     
     # SIMULATIONS
@@ -1105,7 +1092,7 @@ modAppli <- function(parametre){
       #actualisation de la force de contagion en fonction du temps 
       trans_saison = trans_saisonnalité(trans, t)
       
-      # classe d'?ge 1 : Enfant (non mature pour la reproduction)
+      # classe d'âge 1 : Enfant (non mature pour la reproduction)
       # RQ : les naissances sont XX, les nouveaux n?s ?tant dans l'?tat susceptible 
       N <- sum(MAT[4,,t]);	# taille de la pop en t
       MAT[1,1,t+1] <- MAT[1,1,t]*(1-m1-t1-trans_saison*MAT[4,3,t]/N) + loss*MAT[1,4,t]      + max(0, sr*portee*(sum(MAT[2,,t])*f2 + sum(MAT[3,,t])*f3) * (1 - N/K)); 
@@ -1128,22 +1115,21 @@ modAppli <- function(parametre){
       
     }# fin boucle temps
     
-    # sorties ponctuelles ? analyser
-    # XX
+    # sorties ponctuelles à analyser
+    # Prévalence = nb d'individus latents + nb d'infectieux / nombre total d'individu à la fin de la période d'étude
     sortie1 <- (MAT[4,2,temps]+MAT[4,3,temps])/sum(MAT[4,,temps])
-    # xx
+    # Incidence = nombre de nouvelles infections le dernier jour de la période d'étude
     sortie2 <- nvinf[temps]
-    # xx
+    # Pic de l'épidémie : nombre d'individus infectés maximal atteint durant la période d'étude
     sortie3 <- max(MAT[4,3,1:temps])
-    # xx
+    # Nombre d'infection totale réalisé la première année
     sortie4 <- sum(nvinf[1:365])
-    # incidence moyenne sur la période
+    # prevalence journalière moyenne sur la période d'etude
     nb_malade = MAT[4,2,]+MAT[4,3,]
     total_ind = MAT[4,1,]+MAT[4,2,]+MAT[4,3,]+MAT[4,4,]
     sortie5 <- mean(nb_malade / total_ind)
-    # prévalence par année
+    # incidence annuelle moyenne
     sortie6 <- sum(nvinf/2)
-    
     
     
     sorties[i,1] <- sortie1;
@@ -1187,7 +1173,7 @@ createMatriceForOAT <- function(ValNominale){
 }
 
 normaliseSortie <- function(sortie,ValNominale){
-  sortieNominale = modAppli(matrix(ValNominale, nrow=1, ncol=15))
+  sortieNominale = modAppli_saison(matrix(ValNominale, nrow=1, ncol=15))
   return(data.frame(prop_inf = sortie[,1]/sortieNominale[,1],
                     infec_end = sortie[,2]/sortieNominale[,2],
                     nb_max_infec = sortie[,3]/sortieNominale[,3],
@@ -1198,7 +1184,7 @@ normaliseSortie <- function(sortie,ValNominale){
 
 
 matriceOAT = createMatriceForOAT(ValNominale)
-sortieOAT = matriceOAT %>% modAppli()
+sortieOAT = matriceOAT %>% modAppli_saison()
 sortieNormalise = sortieOAT %>% normaliseSortie(ValNominale)
 ```
 
@@ -1310,7 +1296,7 @@ lowerValues = ValNominale*.75
 upperValues = ValNominale*1.25
 
 # On utilise la fonction Morris du package sensitivity
-Morris <- morris(model = modAppli, 
+Morris <- morris(model = modAppli_saison, 
                  factors = par_name, 
                  r = 50, 
                  scale=TRUE,
@@ -1434,7 +1420,7 @@ sample1000 = Fast1000$X
 
 
 ```{r}
-result_fast1000 = modAppli(sample1000)
+result_fast1000 = modAppli_saison(sample1000)
 
 # head(result_fast100)
 ```

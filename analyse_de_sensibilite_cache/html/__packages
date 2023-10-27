@@ -11,3 +11,6 @@ lubridate
 ggpubr
 sensitivity
 cowplot
+knitr
+kableExtra
+plotly

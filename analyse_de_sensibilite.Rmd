@@ -51,7 +51,7 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   - **à compartiment**, les individus sont groupés selon leur état de santé et leur classe d'âge,
   
-  - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieux. 
+  - **à un temps discret** car le temps (2 ans) est divisé en 730 jours au cours desquels les changements d'états du système ont lieu. 
   
 ### 1.B. Processus biologiques modélisés
   
@@ -61,13 +61,15 @@ par_name = c("K", "sr", "m1", "m2", "m3", "f2", "f3", "portee", "t1", "t2", "tra
   
   2- Les individus exposés (infectés/non-infectieux), notés E. Ils sont dans un état latent dans lequel ils sont infectés mais pas encore contagieux.
   
-  3- Les individus infectés/infectieux, notés I. Ils sont infectés et contagieux. Cette classe a un risque de mortalité additionnel lié à la maladie.
+  3- Les individus infectés/infectieux, notés I. Ils sont infectés et contagieux. Cette classe a un risque de mortalité supplémentaire lié à la maladie.
   
   4- Les individus rétablis, notés R. Ils ne sont plus contagieux ni susceptibles d'être infectés. Ils peuvent malgré tout perdre leur immunité et redevenir susceptibles. 
   
   Ce modèle est donc un modèle SEIRS/SLIRS (Susceptible-Exposé/Latent-Infecté-Retiré-Susceptible). Les processus biologiques représentés à travers ce modèle correspondent aux transitions entre les états et sont la **transmission** de la maladie, le temps de **latence** entre l'exposition et l'état infectieux, la **mortalité due à la maladie** ou la **récupération/immunisation** après la maladie, et la **perte d'immunité**. A ces processus liés à la maladie s'ajoutent des processus démographiques : **natalité** et **mortalité naturelle** (hors maladie). 
   
-  En plus des états de santé, la population est structurée en classe d'âge ayant un taux de mortalité et de fertilité propre. Le **veillissement** est donc un processus modélisé ici.
+  En plus des états de santé, la population est structurée en classe d'âge ayant un taux de mortalité et de fertilité propre. Le **vieillissement** est donc un processus modélisé ici.
+  
+  Ce modèle d’épidémie SEIR avec distinction de trois classes d’âges est applicable à un grand nombre de malades humaines et animales comme par exemple la peste porcine.
 
   
 ### 1.C. Equations décrivant le modèle
@@ -151,8 +153,8 @@ Les hypothèses de modélisations liées à la dynamique épidémiologique sont 
  - La **transmission est fréquence-dépendante**. La probabilité de transmission dépend du nombre total de personnes infectées dans la population, quelle que soit leur densité. Cela suggère que la transmission dépend de la fréquence des rencontres entre individus infectés et susceptibles, plutôt que de la densité de la population.
  - Les paramètres épidémiologiques sont les mêmes pour tous les individus, et par extension pour toutes les classes d'âge.
  - Il existe **4 états de santé** possibles : sensibles, latents, infectieux et guéris.
- - Les **paramètres épidémiologiques ne varient pas**. Il n'y a pas d'évolution de l'agent infectieux ou de l'hôte, ni de saisonalité dans la dynamique épidémique. 
- - La transmission est équiprobables quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure de contact dépendantes de l'âge. 
+ - Les **paramètres épidémiologiques ne varient pas**. Il n'y a pas d'évolution de l'agent infectieux ou de l'hôte, ni de saisonnalité dans la dynamique épidémique. 
+ - La transmission est équiprobable quelle que soit la classe d'âge. Autrement dit, un individu d'une classe d'âge a autant de chance d'infecter ou de se faire infecter par un individu de n'importe quelle classe d'âge. Cela suggère une absence de structure de contact dépendantes de l'âge. 
 
   
 ### 1.F. Conditions initiales
@@ -161,14 +163,14 @@ Les hypothèses de modélisations liées à la dynamique épidémiologique sont 
   27 individus sensibles de classe d'âge 1,
   23 individus sensibles de classe d'âge 1,
   36 individus sensibles de classe d'âge 3 et
-  1 individus infecté et infectieux de classe d'âge 3.
+  1 individu infecté et infectieux de classe d'âge 3.
   
   
 ### 1.G. Sorties possibles du modèle
   
   Les sorties proposés sont :
   
-  1 - La **prévalence à la fin de la période d'étude**, c'est à dire le nombre totale d'individus infectés (latents et infectieux) divisé par la taille de la population le dernier jour de la période d'étude.
+  1 - La **prévalence à la fin de la période d'étude**, c'est-à-dire le nombre total d'individus infectés (latents et infectieux) divisé par la taille de la population le dernier jour de la période d'étude.
   
   2 - L'**incidence de la maladie à la fin de la période d'étude**, soit le nombre de nouvelles infections réalisées le dernier jour de la période d'étude. 
   
@@ -191,7 +193,7 @@ Les hypothèses de modélisations liées à la dynamique épidémiologique sont 
 # Sample data
 parameters <- data.frame(
   Nom = c("K","sr","m1", "m2", "m3", "f1", "f2", "portee", "1/t1, 1/t2", "trans", "1/lat", "1/rec", "1/loss", "madd"),
-  Description = c("Capacité de charge de l'environnment", "Sex-ratio", "Mortalité dans la classe d'âge 1",
+  Description = c("Capacité de charge de l'environnement", "Sex-ratio", "Mortalité dans la classe d'âge 1",
                   "Mortalité dans la classe d'âge 2","Mortalité dans la classe d'âge 3",
                   "Taux de fertilité des classes d'âge 2", "Taux de fertilité des classes d'âge 3",
                   "Taille des portées",
@@ -327,8 +329,10 @@ get_resultParam_i = function(i,sortieNormalise,matrixScenario){
   
   return(resultParam_i)
 }
+```
 
 
+```{r, warning=FALSE, message=FALSE}
 plotOATAnalysis <- function(i,sortieNormalise,matrixScenario){
   
   resultParam_i = get_resultParam_i(i,sortieNormalise,matrixScenario)
@@ -385,7 +389,7 @@ Nous allons calculer 2 indices pour mesurer la sensibilité à partir des sortie
 
 - La **sensibilité** : mesure de l'impact d'une variation absolue d'un paramètre sur les résultats du modèle.
 
-- L'**élasticité** (sensibilité relative) mesure de l'impact d'une variation relative d'un paramètre sur les résultats du modèle. Pour calculer l'élasticité, au lieu de mesurer les variations absolues, on mesure les variations relatives par rapport à la valeur nominale du paramètre. 
+- L'**élasticité** (sensibilité relative) mesure l'impact d'une variation relative d'un paramètre sur les résultats du modèle. Pour calculer l'élasticité, au lieu de mesurer les variations absolues, on mesure les variations relatives par rapport à la valeur nominale du paramètre. 
 
 ```{r, warning=FALSE, message=FALSE, include=TRUE}
 sensivity_oat = function(lx, ly){
@@ -474,7 +478,7 @@ Lorsqu'il s'agit d'analyser un modèle, l'utilisation de l'approche OAT standard
 
 # 3. Méthode Morris
 
-## 3.a. Application de la méthode et visualisation
+## 3.A. Application de la méthode et visualisation
 
 ```{r}
 lowerValues = ValNominale*.75
@@ -573,7 +577,7 @@ Les résultats sont très variables selon les sorties, nous allons donc d'abord 
   
   - Sortie 1 : toutes les valeurs de $\mu^*$ et $\sigma$ sont très faibles, les effets semblent négligeables pour tous les paramètres d'entrée. Les paramètres rec, loss, trans et lat se détachent tout de même du lot. 
   
-  - Sortie 2 : assez similirairement à la sortie 1, la plupart des effets semblent négligeables excepté pour K et loss qui aurait un effet linéaire.
+  - Sortie 2 : assez similaire  à la sortie 1, la plupart des effets semblent négligeables excepté pour K et loss qui aurait un effet linéaire.
   
   - Sortie 3 : Au contraire des sorties précédentes, les paramètres semblent pour la plupart avoir des effets. Les plus influents étant rec, trans, K, lat, sr, portee et f3.
   
@@ -581,7 +585,7 @@ Les résultats sont très variables selon les sorties, nous allons donc d'abord 
   
 Finalement, les paramètres les plus importants en terme de sensibilité semblent être : la capacité de charge (K), le taux de transmission (trans), le taux de guérison (rec), le temps de latence (lat), le taux de perte d'immunité (loss) et dans une moindre mesure certains paramètres liés à la natalité (sr, portee, f3). 
 
-Si on compare les 2 méthodes, on observe avec Morris de nombreux effets non-linéaire et/ou d'interraction qui n'était pas observables avec la méthode OAT. Néanmoins, les conclusions quant aux paramètres les plus inflents sont assez similaires avec ce qu'on observait lorsque l'on mesurait l'indice d'élasticité. La principale différence de ce point de vue est l'apparition des paramètres liés à la natalité (sr, portee, f3) parmi les paramètres influents. Or, si l'on regarde les graphes, on voit qu'ils ont une valeurs $\sigma$ plutôt grande mais une valeur $\mu^*$ moins importante. Leur effet est donc principalement lié à une interaction avec d'autres paramètres et/ou des effets non linéaires, ce qui explique pour la méthode OAT ne mettait pas en avant leur importance. 
+Si on compare les 2 méthodes, on observe avec Morris de nombreux effets non-linéaire et/ou d'interaction  qui n'était pas observables avec la méthode OAT. Néanmoins, les conclusions quant aux paramètres les plus influents  sont assez similaires avec ce qu'on observait lorsque l'on mesurait l'indice d'élasticité. La principale différence de ce point de vue est l'apparition des paramètres liés à la natalité (sr, portee, f3) parmi les paramètres influents. Or, si l'on regarde les graphes, on voit qu'ils ont une valeurs $\sigma$ plutôt grande mais une valeur $\mu^*$ moins importante. Leur effet est donc principalement lié à une interaction avec d'autres paramètres et/ou des effets non linéaires, ce qui explique pourquoi la méthode OAT ne mettait pas en avant leur importance. 
 
 
 Nous avons donc vu 2 méthodes qui semblent concorder de manière générale même si la première méthode montre des limites pour mesurer certains effets. Nous allons maintenant utiliser une 3e méthode qui repose sur une approche globale : la méthode FAST (Fourier Amplitude Sensitivity Test). Elle est fondée sur la décomposition de la variance, et présente l'avantage de ne nécessiter que des hypothèses minimales sur la forme du modèle, ce qui la rend applicable dans un large éventail de contextes. Une caractéristique importante du FAST est sa capacité à prendre en compte la nature continue des facteurs d'entrée, ainsi que les interactions entre ces facteurs. Cependant, il convient de noter que cette méthode peut être assez coûteuse en termes de nombre de simulations.
@@ -590,15 +594,14 @@ Nous avons donc vu 2 méthodes qui semblent concorder de manière générale mê
 
 # 4. Méthode FAST
 
-### 4.a. Package et nombre de simulations
+### 4.A. Package et nombre de simulations
 
-Nous allons utiliser la fonction fast99 du package sensitivity. Pour cette analyse, le choix du nombre de scénarios par paramètre dépend de nombreux facteurs comme le nombre de paramètres et la complexité du modèle, l'étendu de la gamme de variation des paramètres, la précision voulue ou encore les ressources disponibles en terme de puissance et temps de calcul. Dans notre situation le modèle n'est pas extremement complexe mais possède tout de même 15 paramètres, nous recherchons une précision correcte mais nous n'avons pas besoin qu'elle soit extremement élevée et nous sommes limité en puissance de calcul. Ainsi, 1000 scénarios devraient suffire et être adapté dans notre cas. 
+Une des différences principales entre les 2 échantillons est que beaucoup plus de valeurs par paramètres sont représentées lorsqu’il y a plus de scénarios par paramètres. La deuxième différence, qui découle de la première d’une certaine manière, est que le nombre de combinaison de valeurs est bien plus grand dans le cas à 1000 scénarios, i.e. le nombre de croisement des valeurs des paramètres est beaucoup plus élevé. A priori, plus de scénarios devraient donc donner des estimations plus fiables sur la sensibilité des paramètres, notamment concernant les effets d'interaction, mais demandera aussi un temps de computation plus élevé.
 
 
+### 4.B. Echantillonnage avec peu de scénarios par paramètre (100)
 
-### 4.b. Echantillonnage avec peu de scénarios par paramètre (100)
-
-On réalise un premier échantillonage avec très peu de scénarios par paramètre, et qui donne au total 1500 simulations. 
+On réalise un premier échantillonnage avec très peu de scénarios par paramètre, et qui donne au total 1500 simulations. 
 
 ```{r}
 scenarios_par_param = 100
@@ -617,7 +620,7 @@ sample100 = Fast100$X
 ```
 
 
-### 4.c. Variations des paramètres obtenues
+### 4.C. Variations des paramètres obtenues
 
 Nous allons représenter le plan d'échantillonnage de plusieurs manières. 
 
@@ -668,7 +671,7 @@ plot_ly(x = x, y = y, z = z, type = "scatter3d", mode = "markers")
 
 ```
 
-### 4.d. Echantillonnage avec beaucoup de scénarios par paramètre (1000)
+### 4.D. Echantillonnage avec beaucoup de scénarios par paramètre (1000)
 
 ```{r}
 scenarios_par_param = 1000
@@ -723,7 +726,7 @@ plot(sample1000[,3],sample1000[,5],pch=20, cex=.7,
 Une des différences principales entre les 2 échantillonages est que beaucoup plus de valeurs par paramètres sont représentées lorsqu'il y a plus de scénarios par paramètres. La deuxième différence, qui découle de la première d'une dertaine manière, est que le nombre de combinaison de valeurs est bien plus grand dans le cas à 1000 scénarios, i.e. le nombre de croisement des valeurs des paramètres est beaucoup plus élevés. A priori, plus de scenarios devraient donc donner des estimations plus fiables sur la sensibilité des paramètres, notamment concernant les effets d'interraction, mais demandera aussi un temps de computation plus élevé.
 
 
-### 4.f. Application du modèle à chaque échantillonage
+### 4.F. Application du modèle à chaque échantillonage
 
 ```{r}
 result_fast100 = modAppli(sample100)
@@ -732,7 +735,7 @@ result_fast1000 = modAppli(sample1000)
 # head(result_fast100)
 ```
 
-### 4.g. Distribution des sorties obtenues
+### 4.G. Distribution des sorties obtenues
 
 ```{r}
 par(mfrow=c(2,2), cex.lab = 0.8,cex.main = 0.9)
@@ -756,10 +759,9 @@ On observe 2 types de distributions :
 
 La distribution de la sortie 3 étant intermédiaire entre ces 2 formes. Pour faire l'analyse de variance, l'hypothèse de normalité de la distribution s'applique. Les sorties 2 et 4 ne pourront donc pas être utilisées dans ce cadre pour calculer les indices de sensibilité. La sortie 1 et 3 se rapprochent assez d'une distribution normale pour que l'on puisse les garder.
 
-Seules les sorties 1 et 3, correpondant à la prévalence le dernier jour de l'étude et au nombre maximal d'individus infectés atteint, seront donc interpréter par la suite. 
+Seules les sorties 1 et 3, correspondant à la prévalence le dernier jour de l’étude et au nombre maximal d’individus infectés atteint, seront donc interprétées par la suite.
 
-
-### 4.h. Indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux)
+### 4.H. Indices de sensibilité principaux (effet principal) et d’ordre 1 (interactions deux-à-deux)
 
 ```{r}
 # on garde uniquement les sortie interprétables
@@ -795,14 +797,12 @@ plot.fast99(indice_sensibilite_1000[[2]], main="Analyse FAST avec 1000 scénario
 ```
 
 
-### 4.i. Comparaison des résultats des 2 échantillonnages 
+### 4.I. Comparaison des résultats des 2 échantillonnages 
 
-Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. Pour la sortie 1, dans le cas d'un échantillonnage à 100 valeurs par paramètres, les variations de quasiment tous les paramètres ont l'air d'avoir un fort effet sur la valeur de la sortie, alors que dans le cas à 1000 scénarios par paramètre la plupart des paramètre ont un effet négligeable excepté rec et loss. Le cas à 1000 scénarios semblent plus proches des résultats obtenus avec l'analyse de Morris. Pour la sortie 3, les paramètres dont la variation a un effet sur la valeur en sortie sont les mêmes à 100 et à 1000 scénarios mais les effets estimés sont beacoup plus faibles dans le second cas. 
+Les résultats sont très différents pour la sortie 1 et semblables pour la sortie 3. Pour la sortie 1, dans le cas d’un échantillonnage à 100 valeurs par paramètres, les variations de quasiment tous les paramètres ont l’air d’avoir un fort effet sur la valeur de la sortie, alors que dans le cas à 1000 scénarios par paramètre la plupart des paramètre ont un effet négligeable excepté rec et loss. Le cas à 1000 scénarios semble plus proche des résultats obtenus avec l’analyse de Morris. Pour la sortie 3, les paramètres dont la variation a un effet sur la valeur en sortie sont les mêmes à 100 et à 1000 scénarios mais les effets estimés sont beaucoup plus faibles dans le second cas.
+Finalement lorsque le nombre de scénarios par paramètre est faible, on a l’impression que la méthode FAST tend à surestimer leur effet sur les valeurs des sorties.
 
-Finalement lorsque le nombre de scénarios par paramètre est faible, on a l'impression que la méthode FAST tend à surestimer leur effet sur les valeurs des sorties.
-
-
-### 4.j. Interprétation du cas à 1000 scénarios par paramètre
+### 4.J. Interprétation du cas à 1000 scénarios par paramètre
 
 La prévalence à la fin de l'étude (sortie 1) montre une sensibilité importante au taux de guérison (rec, 56%) et de perte d'immunité (loss, 38%), autrement dit à la durée de la période d'infection et à la durée d'immunisation. Les autres paramètres ont un effet négligeable. Le nombre maximal d'individus infecté au cours des 2 ans, ou pic épidémique (sortie 3) est très sensible au taux de transmission (trans, 29%) et de récupération (rec, 57%), et dans une moindre mesure à la capacité de charge (K) et au temps de latence.
 
@@ -811,7 +811,7 @@ La prévalence à la fin de l'étude (sortie 1) montre une sensibilité importan
 # 5. Discussion
 ### Les résultats sont-ils cohérents entre méthodes ? Quelles implications possibles ? Que feriez-vous ensuite en termes d’analyse de ce modèle ?
 
-Le tableau suivant récapitule les résultats pour chaque méthode et chaque sortie. A chaque fois, les paramètres ont été classé selon la force de leur effet principal et les paramètres dont l'effet était négligeable n'ont pas été recensés. 
+Le tableau suivant récapitule les résultats pour chaque méthode et chaque sortie. A chaque fois, les paramètres ont été classés selon la force de leur effet principal et les paramètres dont l'effet était négligeable n'ont pas été recensés. 
 
 ```{r}
 parameters <- data.frame(
@@ -821,7 +821,7 @@ parameters <- data.frame(
   Morris = c("rec?, loss?", "K, loss", "rec, trans, K, 
              lat, f3, portee, sr", "K, loss, trans, portee, 
              sr, f3, rec, m3, lat"),
-  FAST = c("rec, loss", " ", "rec, trans, K, lat", " ")
+  FAST = c("rec, loss", "NA", "rec, trans, K, lat", "NA")
 )
 
 parameter_table <- kable(parameters, "html") %>%
@@ -832,7 +832,7 @@ parameter_table
 
 ```
 
-On voit clairement que les analyses donnent des résultats similaires. Cette concordance semble indiquer qu'il y a peu d"effet d'interraction et non linéaires dans le modèle, et que finalement même une analyse peu sophistiquée comme l'OAT aurait donné des résultats probants. 
+On voit clairement que les analyses donnent des résultats similaires. Cette concordance semble indiquer qu'il y a peu d'effet d'interaction  et non linéaires dans le modèle, et que finalement même une analyse peu sophistiquée comme l'OAT aurait donné des résultats probants. 
 
 La poursuite des analyses serait très dépendante de la question posée et de l'objectif de l'étude mais voici quelques possibilités :
   
@@ -843,6 +843,695 @@ La poursuite des analyses serait très dépendante de la question posée et de l
   - Au contraire, complexifier le modèle au niveau des paramètres les plus influents, 
   
   - Produire des scénarios de prédiction en se concentrant sur la variation des paramètres les plus influents. 
+
+# 6. Introduction d'une variation au modèle
+
+## 6.A. Présentation de la variation de modèle choisie
+
+### 6.A.a. Choix de la nouvelle caractéristique épidémique modélisée
+
+Un caractéristique importante des certaines épidémies est leur apparition saisonnière dans les populations.  Nous avons fait le choix de complexifier le modèle en introduisant une variation périodique du taux de transmission. Pour cela, au sein du modèle, le paramètre  Trans varie de 0 au double de sa valeur nominale avec une variation sinusoïdale:
+
+$$ trans’ = trans \times (1 + sin(φ + w\times t)) $$ 
+avec $$ φ = 0, w = 2pi/periode, periode = 365 $$
+
+
+```{r}
+ trans_saisonnalité = function(trans, t, periode = 365){
+      
+      w=2*pi/periode
+      trans_ = trans * (1 + sin(0 + w*t))
+      
+      return(trans_)
+    }
+```
+
+```{r}
+
+trans = 0.3
+
+trans_plot = tibble(time = 1:(365)*2) %>% 
+  mutate(trans = trans_saisonnalité(trans=trans, time, periode = 365))
+
+
+```
+
+```{r}
+
+library(ggplot2)
+
+p = ggplot()+
+  geom_point(data = trans_plot, aes(x= time, y= trans))+
+  geom_vline(
+    xintercept = c((1:2)*365),
+    colour = "black"
+  )+
+  geom_hline(
+    yintercept = c(0.3),
+    colour = "blue"
+  )+
+  labs(x = "Temps", y = "Taux de transmission") +
+  theme_minimal() +
+  ggtitle("Evolution du taux de transmission - Modèle avec saisonnalité")
+p
+```
+
+
+
+```{r}
+
+# modification de la fonction avec introduction de la saisonnalité 
+
+modAppli1 <- function(parametre){  
+  # cette version de modAppli retourne MAT et les nouvelles infections plutot que
+  # les 4 sorties
+  # CONDITIONS DE SIMULATION
+  temps = 2*365; # nb de pas de temps (en jours)
+  
+  # boucle des scenarios de l'echantillonnage de l'AS
+  for (i in 1:nrow(parametre)) { 
+    
+    # STRUCTURE & PARAMETRES DU MODELE
+    
+    # Parametres decrivant la population
+    K = parametre[i,1];		# capacite de charge
+    sr = parametre[i,2];	# taux de survie des nourissons ?
+    m1 = parametre[i,3];	# taux de mortalite dans la classe d'?ge 1 (enfant)
+    m2 = parametre[i,4];	# taux de mortalite dans la classe d'?ge 2 (adulte)
+    m3 = parametre[i,5];	# taux de mortalite dans la classe d'?ge 3 (senior)
+    f2 = parametre[i,6];	# taux de fertilite pour la classe d'age 2 (adulte)
+    f3 = parametre[i,7];	# taux de fertilite pour la classe d'age 3 (senior)
+    portee = parametre[i,8];	# nombre de portees a chaque pas de temps
+    t1 = parametre[i,9];	# proportion d'individus passant de la classe d'?ge 1 ? la classe d'?ge 2 ? chaque instant t
+    t2 = parametre[i,10];	# proportion d'individus passant de la classe d'?ge 2 ? la classe d'?ge 3 ? chaque instant t
+    
+    # Parametres relatifs ? la maladie
+    trans = parametre[i,11]; # taux de transmission
+    lat = parametre[i,12];	# taux de passage de l'etat latent a l'etat infecte
+    rec = parametre[i,13];	# taux de recuperation
+    loss = parametre[i,14];	# taux de perte d'immunite 
+    madd = parametre[i,15];	# taux de mortalite du a la maladie
+    
+    #Prise en compte de la saisonnalité de la force de contagion
+    trans_saisonnalité = function(trans, t, periode = 365){
+      
+      w=2*pi/periode
+      trans_ = trans * (1 + sin(0 + w*t))
+      
+      return(trans_)
+    }
+    
+    # INITIALISATION
+    MAT <- array(0, dim=c(4,4,temps)); # nb indiv par classe d'?ge en ligne (derni?re ligne = pop tot), ?tat de sant? en colonne, pas de temps (dimension 3)
+    nouvellesInfections <- array(0, dim=c(temps));
+    # conditions initiales (la population est ? sa structure d'?quilibre, calcul?e par ailleurs)
+    MAT[1,1,1] <- 27; # nombre d'enfants sains
+    MAT[2,1,1] <- 23; # nombre d'adulte sains
+    MAT[3,1,1] <- 36; # nombre de seniors sains
+    MAT[3,3,1] <- 1;  # nombre de seniors infectes
+    # effectifs par etat de sante
+    MAT[4,1,1] <- sum(MAT[1:3,1,1]); MAT[4,2,1] <- sum(MAT[1:3,2,1]); MAT[4,3,1] <- sum(MAT[1:3,3,1]); MAT[4,4,1] <- sum(MAT[1:3,4,1]);
+    
+    # SIMULATIONS
+    # boucle du temps
+    for (t in 1:(temps-1)) { 
+      
+      #actualisation de la force de contagion en fonction du temps 
+      trans_saison = trans_saisonnalité(trans, t)
+      
+      # classe d'?ge 1 : Enfant (non mature pour la reproduction)
+      # RQ : les naissances sont XX, les nouveaux n?s ?tant dans l'?tat susceptible
+      N <- sum(MAT[4,,t]);	# taille de la pop en t
+      MAT[1,1,t+1] <- MAT[1,1,t]*(1-m1-t1-trans_saison*MAT[4,3,t]/N) + loss*MAT[1,4,t]      + max(0, sr*portee*(sum(MAT[2,,t])*f2 + sum(MAT[3,,t])*f3) * (1 - N/K)); 
+      MAT[1,2,t+1] <- MAT[1,2,t]*(1-m1-t1-lat)			  + trans_saison*MAT[1,1,t]*MAT[4,3,t]/N; 
+      MAT[1,3,t+1] <- MAT[1,3,t]*(1-m1-madd-t1-rec)  		  + lat*MAT[1,2,t]; 
+      MAT[1,4,t+1] <- MAT[1,4,t]*(1-m1-t1-loss) 		  + rec*MAT[1,3,t]; 
+      # classe d'?ge 2 : Adulte 
+      MAT[2,1,t+1] <- MAT[1,1,t]*t1	+ MAT[2,1,t]*(1-m2-t2-trans_saison*MAT[4,3,t]/N) + loss*MAT[2,4,t];
+      MAT[2,2,t+1] <- MAT[1,2,t]*t1	+ MAT[2,2,t]*(1-m2-t2-lat)			+ trans_saison*MAT[2,1,t]*MAT[4,3,t]/N;
+      MAT[2,3,t+1] <- MAT[1,3,t]*t1	+ MAT[2,3,t]*(1-m2-madd-t2-rec)		+ lat*MAT[2,2,t];
+      MAT[2,4,t+1] <- MAT[1,4,t]*t1	+ MAT[2,4,t]*(1-m2-t2-loss)			+ rec*MAT[2,3,t];
+      # classe d'?ge 3 : Senior 
+      MAT[3,1,t+1] <- MAT[2,1,t]*t2	+ MAT[3,1,t]*(1-m3-trans_saison*MAT[4,3,t]/N) 	+ loss*MAT[3,4,t];
+      MAT[3,2,t+1] <- MAT[2,2,t]*t2	+ MAT[3,2,t]*(1-m3-lat)				+ trans_saison*MAT[3,1,t]*MAT[4,3,t]/N;
+      MAT[3,3,t+1] <- MAT[2,3,t]*t2	+ MAT[3,3,t]*(1-m3-madd-rec)			+ lat*MAT[3,2,t];
+      MAT[3,4,t+1] <- MAT[2,4,t]*t2	+ MAT[3,4,t]*(1-m3-loss)			+ rec*MAT[3,3,t];
+      # calcul des effectifs par etat de sante
+      MAT[4,1,t+1] <- sum(MAT[1:3,1,t+1]); MAT[4,2,t+1] <- sum(MAT[1:3,2,t+1]); MAT[4,3,t+1] <- sum(MAT[1:3,3,t+1]); MAT[4,4,t+1] <- sum(MAT[1:3,4,t+1]);
+      nouvellesInfections[t+1]   <- trans_saison*MAT[4,1,t]*MAT[4,3,t]/N
+      
+    }# fin boucle temps
+    
+    
+  }# fin boucle scenarios AS
+  
+  return(list(nouvellesInfections, MAT))
+} # fin fonction du modele
+
+# END
+
+```
+
+### 6.A.b. Effet de la variation du modèle sur les stades épidémiques
+
+Après avoir déterminé les effectifs de chaque stade épidémique avec cette introduction de la saisonnalité (fig. ci-dessous), on remarque que la dynamique épidémique est très différente. Dans ce nouveau modèle, il y a une succession de vagues épidémiques. La période de ces vagues est égale à la période de variation du taux de transmission i.e. une année.
+
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+
+scenario_initial = matrix(ValNominale, nrow=1, ncol=15)
+
+res = modAppli1(scenario_initial)
+
+
+effectif_data = tibble(
+       temps = 1:(2*365),
+       
+       S = res[[2]][4,1,],
+       L = res[[2]][4,2,],
+       I = res[[2]][4,3,],
+       R = res[[2]][4,4,],
+       
+       N = S + L + I + R,
+       
+       C1 = res[[2]][1,1,] + res[[2]][1,2,] + res[[2]][1,3,] + res[[2]][1,4,],
+       C2 = res[[2]][2,1,] + res[[2]][2,2,] + res[[2]][2,3,] + res[[2]][2,4,],
+       C3 = res[[2]][3,1,] + res[[2]][3,2,] + res[[2]][3,3,] + res[[2]][3,4,]
+       )
+```
+
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+
+
+p1 = ggplot() +
+  geom_line(data = effectif_data, aes(x = temps, y = S, color = "S"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = L, color = "E"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = I, color = "I"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = R, color = "R"), linewidth = 1) +
+  geom_line(data = effectif_data, aes(x = temps, y = N, color = "N"), linewidth = 1) +
+  labs(x = "Temps", y = "Effectif") +
+  labs(color = "Etat") +
+  theme_minimal() +
+  ggtitle("Evolution de la dynamique épidémique - modèle avec saisonnalité")
+
+
+p1
+
+```
+
+### 6.A.c. Introduction de nouvelles sorties
+
+La saisonnalité de la dynamique épidémique pourrait avoir un un effet important sur la prévalence et l’incidence de la maladie. Afin d’évaluer cet aspect, nous introduisons deux nouvelles sorties au modèle l'incidence moyenne sur la période d’étude et la prévalence par année, noté respectivement  sortie 5 et sortie 6.
+
+```{r}
+modAppli <- function(parametre){  
+  # Version donn?e par les profs
+  # CONDITIONS DE SIMULATION
+  temps = 2*365; # nb de pas de temps (en jours)
+  # initialisation pour la sauvegarde de 4 sorties ponctuelles pour chaque jeu de param?tres
+  sorties <- matrix(0, nrow=nrow(parametre), ncol=6)
+  
+  # boucle des sc?narios de l'?chantillonnage de l'AS
+  for (i in 1:nrow(parametre)) { 
+    
+    # STRUCTURE & PARAMETRES DU MODELE
+    
+    # Parametres decrivant la population
+    K = parametre[i,1];		# capacite de charge
+    sr = parametre[i,2];	# Sex ratio
+    m1 = parametre[i,3];	# taux de mortalite dans la classe d'?ge 1 (enfant)
+    m2 = parametre[i,4];	# taux de mortalite dans la classe d'?ge 2 (adulte)
+    m3 = parametre[i,5];	# taux de mortalite dans la classe d'?ge 3 (senior)
+    f2 = parametre[i,6];	# taux de fertilite pour la classe d'age 2 (adulte)
+    f3 = parametre[i,7];	# taux de fertilite pour la classe d'age 3 (senior)
+    portee = parametre[i,8];	# nombre de portees a chaque pas de temps
+    t1 = parametre[i,9];	# proportion d'individus passant de la classe d'?ge 1 ? la classe d'?ge 2 ? chaque instant t
+    t2 = parametre[i,10];	# proportion d'individus passant de la classe d'?ge 2 ? la classe d'?ge 3 ? chaque instant t
+    
+    # Parametre relatif ? la maladie
+    trans = parametre[i,11]; # taux de transmission
+    lat = parametre[i,12];	# taux de passage de l'etat latent a l'etat infecte
+    rec = parametre[i,13];	# taux de recuperation
+    loss = parametre[i,14];	# taux de perte d'immunite 
+    madd = parametre[i,15];	# taux de mortalite du a la maladie
+    
+    
+    #Prise en compte de la saisonnalité de la force de contagion
+    trans_saisonnalité = function(trans, t, periode = 365){
+      
+      w=2*pi/periode
+      trans_ = trans * (1 + sin(0 + w*t))
+      
+      return(trans_)
+    }
+    
+    
+    # INITIALISATION
+    MAT <- array(0, dim=c(4,4,temps)); # nb indiv par classe d'?ge en ligne (derni?re ligne = pop tot), ?tat de sant? en colonne, pas de temps (dimension 3)
+    nvinf <- array(0, dim=c(temps));
+    # conditions initiales (la population est ? sa structure d'?quilibre, calcul?e par ailleurs)
+    MAT[1,1,1] <- 27; # nombre d'enfants sains
+    MAT[2,1,1] <- 23; # nombre d'adulte sains
+    MAT[3,1,1] <- 36; # nombre de seniors sains
+    MAT[3,3,1] <- 1;  # nombre de seniors infectes
+    # effectifs par ?tat de sant?
+    MAT[4,1,1] <- sum(MAT[1:3,1,1]); MAT[4,2,1] <- sum(MAT[1:3,2,1]); MAT[4,3,1] <- sum(MAT[1:3,3,1]); MAT[4,4,1] <- sum(MAT[1:3,4,1]);
+    
+    # SIMULATIONS
+    # boucle du temps
+    for (t in 1:(temps-1)) { 
+      
+      #actualisation de la force de contagion en fonction du temps 
+      trans_saison = trans_saisonnalité(trans, t)
+      
+      # classe d'?ge 1 : Enfant (non mature pour la reproduction)
+      # RQ : les naissances sont XX, les nouveaux n?s ?tant dans l'?tat susceptible 
+      N <- sum(MAT[4,,t]);	# taille de la pop en t
+      MAT[1,1,t+1] <- MAT[1,1,t]*(1-m1-t1-trans_saison*MAT[4,3,t]/N) + loss*MAT[1,4,t]      + max(0, sr*portee*(sum(MAT[2,,t])*f2 + sum(MAT[3,,t])*f3) * (1 - N/K)); 
+      MAT[1,2,t+1] <- MAT[1,2,t]*(1-m1-t1-lat)			  + trans_saison*MAT[1,1,t]*MAT[4,3,t]/N; 
+      MAT[1,3,t+1] <- MAT[1,3,t]*(1-m1-madd-t1-rec)  		  + lat*MAT[1,2,t]; 
+      MAT[1,4,t+1] <- MAT[1,4,t]*(1-m1-t1-loss) 		  + rec*MAT[1,3,t]; 
+      # classe d'?ge 2 : Adulte 
+      MAT[2,1,t+1] <- MAT[1,1,t]*t1	+ MAT[2,1,t]*(1-m2-t2-trans_saison*MAT[4,3,t]/N) + loss*MAT[2,4,t];
+      MAT[2,2,t+1] <- MAT[1,2,t]*t1	+ MAT[2,2,t]*(1-m2-t2-lat)			+ trans_saison*MAT[2,1,t]*MAT[4,3,t]/N;
+      MAT[2,3,t+1] <- MAT[1,3,t]*t1	+ MAT[2,3,t]*(1-m2-madd-t2-rec)		+ lat*MAT[2,2,t];
+      MAT[2,4,t+1] <- MAT[1,4,t]*t1	+ MAT[2,4,t]*(1-m2-t2-loss)			+ rec*MAT[2,3,t];
+      # classe d'?ge 3 : Senior 
+      MAT[3,1,t+1] <- MAT[2,1,t]*t2	+ MAT[3,1,t]*(1-m3-trans_saison*MAT[4,3,t]/N) 	+ loss*MAT[3,4,t];
+      MAT[3,2,t+1] <- MAT[2,2,t]*t2	+ MAT[3,2,t]*(1-m3-lat)				+ trans_saison*MAT[3,1,t]*MAT[4,3,t]/N;
+      MAT[3,3,t+1] <- MAT[2,3,t]*t2	+ MAT[3,3,t]*(1-m3-madd-rec)			+ lat*MAT[3,2,t];
+      MAT[3,4,t+1] <- MAT[2,4,t]*t2	+ MAT[3,4,t]*(1-m3-loss)			+ rec*MAT[3,3,t];
+      # calcul des effectifs par ?tat de sant?
+      MAT[4,1,t+1] <- sum(MAT[1:3,1,t+1]); MAT[4,2,t+1] <- sum(MAT[1:3,2,t+1]); MAT[4,3,t+1] <- sum(MAT[1:3,3,t+1]); MAT[4,4,t+1] <- sum(MAT[1:3,4,t+1]);
+      nvinf[t+1]   <- trans_saison*MAT[4,1,t]*MAT[4,3,t]/N
+      
+    }# fin boucle temps
+    
+    # sorties ponctuelles ? analyser
+    # XX
+    sortie1 <- (MAT[4,2,temps]+MAT[4,3,temps])/sum(MAT[4,,temps])
+    # xx
+    sortie2 <- nvinf[temps]
+    # xx
+    sortie3 <- max(MAT[4,3,1:temps])
+    # xx
+    sortie4 <- sum(nvinf[1:365])
+    # incidence moyenne sur la période
+    nb_malade = MAT[4,2,]+MAT[4,3,]
+    total_ind = MAT[4,1,]+MAT[4,2,]+MAT[4,3,]+MAT[4,4,]
+    sortie5 <- mean(nb_malade / total_ind)
+    # prévalence par année
+    sortie6 <- sum(nvinf/2)
+    
+    
+    
+    sorties[i,1] <- sortie1;
+    sorties[i,2] <- sortie2;
+    sorties[i,3] <- sortie3;
+    sorties[i,4] <- sortie4;
+    sorties[i,5] <- sortie5;
+    sorties[i,6] <- sortie6;
+    
+  }# fin boucle sc?narios AS
+  return(sorties)
+} # fin fonction du mod?le
+
+# END
+```
+
+
+## 6.B. Analyse de sensibilité avec le nouveau modèle
+
+Afin d’évaluer comment la modification du modèle modifie la sensibilité des paramètres par rapport au modèle initial, les trois méthodes d’analyse de sensibilité seront appliquées au nouveau modèle. Les résultats obtenus seront alors comparés avec celui du modèle initial.
+
+### 6.B.a. Méthode OAT
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+
+createMatriceForOAT <- function(ValNominale){
+  nbParametres = length(ValNominale)
+  nbScenariosParParam = 11
+  nbScenariosTotal = nbScenariosParParam * nbParametres
+  valeurMin = ValNominale * 0.75
+  valeurMax = ValNominale * 1.25
+
+  matrixScenario =  matrix(rep(ValNominale, each = nbScenariosTotal), nrow = nbScenariosTotal, ncol = nbParametres)
+  for (i in 1:nbParametres){
+    i_min = nbScenariosParParam*(i-1)+1
+    i_max = nbScenariosParParam*i
+
+    matrixScenario[i_min:i_max,i] = pracma::linspace(valeurMin[i],valeurMax[i], n = nbScenariosParParam)
+  }
+  return(matrixScenario)
+}
+
+normaliseSortie <- function(sortie,ValNominale){
+  sortieNominale = modAppli(matrix(ValNominale, nrow=1, ncol=15))
+  return(data.frame(prop_inf = sortie[,1]/sortieNominale[,1],
+                    infec_end = sortie[,2]/sortieNominale[,2],
+                    nb_max_infec = sortie[,3]/sortieNominale[,3],
+                    nb_infec_year1 = sortie[,4]/sortieNominale[,4],
+                    indicence = sortie[,5]/sortieNominale[,5],
+                    prevalence = sortie[,6]/sortieNominale[,6]))
+}
+
+
+matriceOAT = createMatriceForOAT(ValNominale)
+sortieOAT = matriceOAT %>% modAppli()
+sortieNormalise = sortieOAT %>% normaliseSortie(ValNominale)
+```
+
+```{r, warning=FALSE, message=FALSE}
+get_resultParam_i = function(i,sortieNormalise,matrixScenario){
+  
+  nbScenariosParParam = 11
+  i_min = nbScenariosParParam*(i-1)+1
+  i_max = nbScenariosParParam*i
+  resultParam_i = data.frame(parametre=matrixScenario[i_min:i_max,i],
+                             prop_inf=sortieNormalise[i_min:i_max,1],
+                             nb_infected_end=sortieNormalise[i_min:i_max,2],
+                             nb_max_infec=sortieNormalise[i_min:i_max,3],
+                             nb_infec_year1=sortieNormalise[i_min:i_max,4],
+                             indicence = sortieNormalise[i_min:i_max,5],
+                             prevalence = sortieNormalise[i_min:i_max,6])
+  
+  return(resultParam_i)
+}
+```
+
+
+
+```{r, warning=FALSE, message=FALSE, include=TRUE}
+sensivity_oat = function(lx, ly){
+  diff_y = max(ly) - min(ly)
+  diff_x = max(lx) - min(lx)
+  return(diff_y/diff_x)
+}
+
+
+elascitiy_oat = function(lx, ly){
+  return(sensivity_oat(lx, ly)*(mean(lx[[1]])/mean(ly[[1]])))
+}
+
+
+oat_index= tibble(parametre = NaN,
+            sensibility = NaN,
+            elasticity = NaN,
+            sortie = NaN)
+
+for (sortie_ in 1:6){
+  
+  res_s = c()
+  res_e = c()
+  for (i_ in 1:15){
+    resultParam_i_ = get_resultParam_i(i=i_,sortieOAT,matriceOAT)
+    
+    res_i = sensivity_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_s = c(res_s, res_i)
+    
+    res_i = elascitiy_oat(resultParam_i_[1], resultParam_i_[sortie_+1])
+    res_e = c(res_e, res_i)
+  }
+  
+  tibble_sortie_i = tibble(
+         parametre = par_name,
+         sensibility = res_s,
+         elasticity = res_e,
+         sortie = rep(paste0("S", sortie_), length(res_s)))
+  
+  oat_index = rbind(oat_index, tibble_sortie_i)
+}
+
+
+res  = oat_index[2:nrow(oat_index),]
+
+# Définir un facteur pour la variable "sortie"
+res$sortie <- factor(res$sortie, levels = c("S1", "S2", "S3", "S4", "S5", "S6"))
+
+# Creation de 2 barplots séparés pour la sensibilité et l'élasticité
+p <- ggplot(data = res, aes(x = parametre, y = sensibility, fill = parametre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Sensibilité", y = "Sensibilité") +
+  facet_wrap(~sortie, scales = "free") +  #
+  theme_minimal() +
+  theme(legend.position="none", 
+        axis.text.x = element_text(size = 6, angle = 60),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 6))
+
+p2 <- ggplot(data = res, aes(x = parametre, y = elasticity, fill = parametre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Elasticité", y = "Elasticité") +
+  facet_wrap(~sortie, scales="free_x") +  
+  theme_minimal() +
+  theme(legend.position="none", 
+        axis.text.x = element_text(size = 6, angle = 60),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 6))
+
+
+print(p)
+print(p2)
+```
+
+Avec ce nouveau modèle, les paramètres les plus impactants varient toujours selon les sorties mais on peut tout de même lister les plus influents : le taux de perte d’immunité (loss) et le taux de récupération (rec). Ces résultats se rapprochent fortement de ceux réalisés avec le modèle initial.
+
+Lorsque l’on regarde l’élasticité et on note toujours l’importance du taux de perte d’immunité (loss) néanmoins le taux de récupération (rec) semble prendre une importance de premier plan.
+
+Les paramètres les plus influents avec ces indices sont le taux de récupération (rec), le taux de transmission (trans), le taux de perte d’immunité (loss) et la capacité de charge du milieu (K).
+
+
+### 6.B.b. Méthode Morris
+
+
+```{r}
+lowerValues = ValNominale*.75
+upperValues = ValNominale*1.25
+
+# On utilise la fonction Morris du package sensitivity
+Morris <- morris(model = modAppli, 
+                 factors = par_name, 
+                 r = 50, 
+                 scale=TRUE,
+                 design = list(type = "oat", levels = 6, grid.jump = 3),
+                 binf=lowerValues,
+                 bsup=upperValues)
+```
+
+
+```{r}
+get_dfMorris <- function(Morris){
+  # Cette fonction sert à récupérer mu, mu* et sigma pour chaque sortie du modèle sous 
+  # la forme d'un data frame
+  dfMorris = getMorrisResult(Morris$ee,mean,"mu") %>%
+    cbind(getMorrisResult(abs(Morris$ee),mean,"mu.star")) %>% # mu.star mesure la sensibilité 
+    cbind(getMorrisResult(Morris$ee,sd,"sigma")) # sigma mesure interactions et relations non linéaires
+  return(dfMorris)
+}
+
+getMorrisResult <- function(Morris_ee, functionToApply,parameter){
+  # Sous fonction de get_dfMorris pour calculer mu, mu* ou sigma
+  # en appliquant la methode donnée dans l'aide de la fonction morris
+  df = apply(Morris_ee, 3, function(M){apply(M, 2, functionToApply)}) %>%
+    as.data.frame() %>%
+    renameColMorris(parameter)
+}
+```
+
+
+```{r}
+renameColMorris <- function(df,parameter){
+  # Sous fonction de getMorrisResult, sert à avoir des noms
+  # de colonnes qui font sens
+  colnames(df) <- paste0(parameter, "_S", 1:6)
+  return(df)
+}
+```
+
+
+```{r}
+plotMorris <- function(mu.star_SX,sigma_SX,title="Analyse de Morris",parametersList=par_name){
+  Parametres <- c(rep("démographiques",10),rep("épidémiques",5))
+  
+  plot <- ggplot(data=NULL,aes(x=mu.star_SX,y=sigma_SX,col=Parametres)) +
+    geom_rect(aes(fill = Parametres),
+              xmin = -Inf, xmax = 0.1, ymin = -Inf, ymax = Inf, alpha = 0.3, fill="lightyellow") +
+    geom_rect(aes(fill = Parametres),
+              xmin = 0.1, xmax = Inf, ymin = -Inf, ymax = 0.1, alpha = 0.3, fill="orange") +
+    geom_rect(aes(fill = Parametres),
+              xmin = 0.1, xmax = Inf, ymin = 0.1, ymax = Inf, alpha = 0.3, fill="lightcyan") +
+    geom_text(aes(label=parametersList),size=2) +
+    scale_color_manual(values = c("darkblue","darkred")) +
+    xlab(label="mu*") +
+    ylab(label="sigma") +
+    labs(title = title) +
+    theme_minimal()+
+    theme(text = element_text(size = 6))
+  return(plot)
+}
+
+
+dfMorris <- get_dfMorris(Morris)
+plot_S1 <- plotMorris(mu.star_SX=dfMorris$mu.star_S1,sigma_SX=dfMorris$sigma_S1,
+                      title="Sortie 1 : Prévalence à la fin de l'étude")
+plot_S2 <- plotMorris(mu.star_SX=dfMorris$mu.star_S2,sigma_SX=dfMorris$sigma_S2,
+                      title="Sortie 2 : Incidence à la fin de l'étude")
+plot_S3 <- plotMorris(mu.star_SX=dfMorris$mu.star_S3,sigma_SX=dfMorris$sigma_S3,
+                      title="Sortie 3 : Pic épidémique")
+plot_S4 <- plotMorris(mu.star_SX=dfMorris$mu.star_S4,sigma_SX=dfMorris$sigma_S4,
+                      title = "Sortie 4 : Nombre d'infection la première année")
+plot_S5 <- plotMorris(mu.star_SX=dfMorris$mu.star_S5,sigma_SX=dfMorris$sigma_S4,
+                      title = "Sortie 5 : Indicence moyenne sur la période d'étude")
+plot_S6 <- plotMorris(mu.star_SX=dfMorris$mu.star_S6,sigma_SX=dfMorris$sigma_S4,
+                      title = "Sortie 6 : Prévalence par année")
+
+grid <- plot_grid(plotlist = list(plot_S1,plot_S2,plot_S3,plot_S4,plot_S5, plot_S6),ncol=2)
+
+plot_grid(
+  ggdraw() + draw_text("Analyse de Morris", x = 0.5, y = 1, vjust = 2, hjust = 0.5, size = 16),
+  grid,
+  ncol = 1,
+  rel_heights = c(0.1, 1)
+)
+```
+
+
+Les résultats sont très variables selon les sorties, nous allons donc d'abord interpréter les résultats par sortie :
+  
+  - Sortie 1 : la plupart des effets semblent négligeables excepté pour trans et rec qui auraient des effets non linéaires et/ou avec interaction.
+  
+  - Sortie 2 :  trans, rec, loss, K et lat  auraient des effets non linéaires et/ou avec interaction.
+  
+  - Sortie 3 : trans, rec, losss, K, lat, sr, portee et m3  auraient des effets non linéaires et/ou avec interaction.
+  
+  - Sortie 4 : les effets sont très similaires à la sortie 3. 
+  
+  - Sortie 5 : toutes les valeurs de $\mu^*$ et $\sigma$ sont très faibles, les effets semblent négligeables pour tous les paramètres d'entrée. Les paramètres rec, loss, trans et lat se détachent tout de même du lot. 
+  
+  - Sortie 6 : les effets sont très similaires à la sortie 5. 
+  
+  
+  
+Finalement, les paramètres les plus importants en terme de sensibilité semblent être : le taux de guérison (rec), le taux de transmission (trans), le taux de perte d'immunité (loss), la capacité de charge (K), le temps de latence (lat) et dans une moindre mesure certains paramètres liés à la natalité (sr, portee, 33). 
+
+
+### 6.B.c. Méthode FAST
+
+
+```{r}
+scenarios_par_param = 1000
+
+Fast1000 <- fast99(model = NULL, 
+                 factors = par_name, 
+                 n = scenarios_par_param,
+                 q = rep("qunif", 15),
+                 q.arg =q.arg4)
+
+sample1000 = Fast1000$X
+```
+
+
+
+```{r}
+result_fast1000 = modAppli(sample1000)
+
+# head(result_fast100)
+```
+
+
+```{r}
+par(mfrow=c(2,3), cex.lab = 0.8,cex.main = 0.9)
+title = paste("Distribution pour la sortie",
+              c("1 \n (nombre d'infectés le dernier jour)",
+                "2 \n (nombre d'infections le dernier jour)",
+                "3 \n (nombre d'infectés sur les 2 années)",
+                "4 \n (nombre d'infection la première année)",
+                "5 \n (incidence moyenne)",
+                "6 \n (prévalence par année)"
+                ))
+for (i in 1:6){
+  hist(result_fast1000[,i],main=title[i],xlab="Valeurs",ylab="Fréquence",breaks=100,col="black")
+}
+
+```
+
+```{r}
+# on garde uniquement les sortie interprétables
+sortie_interpetable = c(3, 4, 5, 6)
+
+# on calcule des indices de sensibilité avec tell()
+indice_sensibilite_1000 <- lapply(sortie_interpetable, function(i) tell(Fast1000, result_fast1000[, i]))
+```
+
+
+```{r}
+# On fait une visualisation graphiquem
+plot.fast99 <- function(x, ylim = c(0, 1), main = NULL, names.arg = NULL, ...) {
+  S <- rbind(x$D1 / x$V, 1 - x$Dt / x$V - x$D1 / x$V)
+  colnames(S) <- colnames(x$X)
+  bar.col <- c("darkblue","darkred")
+  barplot(S, ylim = ylim, col = bar.col, main = main, names.arg = names.arg,cex.names=.43)
+  legend("topright", c("Effet principal", "Interactions"), fill = bar.col, cex=0.6)
+  abline(h=0.2, col = "gray", lty = 2)
+}
+
+
+par(mfrow=c(2,2), cex.main=0.7, mar=c(2, 3, 2, 2), cex.axis=0.6)
+
+plot.fast99(indice_sensibilite_1000[[1]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 3)")
+
+plot.fast99(indice_sensibilite_1000[[2]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 4)")
+
+plot.fast99(indice_sensibilite_1000[[3]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 5)")
+
+plot.fast99(indice_sensibilite_1000[[4]], main="Analyse FAST avec 1000 scénarios par paramètre \n (résulat pour la sortie 6)")
+
+```
+
+Le nombre maximal d’individus infectés au cours des 2 ans, ou pic épidémique (sortie 3) est très sensible au taux de récupération (rec, 61%) et dans une moindre mesure à la capacité de charge (K), au taux de transmission (trans) et au temps de latence.
+
+Le nombre d'infections la première année (sortie 4) montre une sensibilité importante à la capacité de charge (K, 47%) et de perte d’immunité (loss, 36%), autrement dit à la durée de la période d’infection et à la durée d’immunisation. Les autres paramètres ont un effet négligeable.
+
+L’incidence moyenne (sortie 5) est très sensible au taux de récupération (rec, 70%) et à la durée d’immunité (loss, 23%).
+La prévalence par année (sortie 6) est très sensible au taux de récupération (rec, 69%).
+
+
+
+## 6.C. Discussion
+
+```{r}
+parameters <- data.frame(
+  
+  Méthode = c("Sortie 1","Sortie 2","Sortie 3", "Sortie 4", "Sortie 5", "Sortie 6"),
+  
+  OAT = c("rec, loss, trans, lat", "K, loss, trans, portee, 
+          sr, f3", "rec, trans, lat, K", "K, loss, trans, f3, sr, portee", "NA", "NA"),
+  Morris = c("rec?, loss?", "K, loss", "rec, trans, K, 
+             lat, f3, portee, sr", "K, loss, trans, portee, 
+             sr, f3, rec, m3, lat", "NA", "NA"),
+  FAST = c("rec, loss", "NA", "rec, trans, K, lat", "NA", "NA", "NA"),
+  
+  
+  OAT = c("loss, rec, trans", "loss, rec, trans", "loss, rec", "loss, rec", "loss, rec", "loss, rec"),
+  
+  Morris = c("rec, trans", "rec, trans, loss, K, lat", "rec, trans, loss, K, lat, sr, portee, m3", "rec, trans, loss, K, lat, sr, portee, m3", "", ""),
+  
+  FAST = c("NA", "NA", "rec, K", "K, loss", "rec, loss", "rec")
+) 
+
+colnames(parameters) = c("Méthode", "OAT", "Morris", "FAST", "OAT", "Morris", "Fast")
+
+parameter_table <- kable(parameters, "html") %>%
+  kable_styling(full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)  %>%
+  add_header_above(c(" " = 1, "Sans saisonnalité" = 3, "Avec saisonnalité" = 3))
+
+parameter_table
+
+```
+
+En plus d’introduire une dynamique différente à l’épidémie modélisée, l’ajout d’une saisonnalité de la transmission de la maladie change la sensibilité des paramètres du modèle. Même si l’on retrouve que les paramètres épidémiologiques restent les plus sensibles pour les sorties considérées, leur ordre d’importance change fortement (cf. Fig. ci-dessus). Par exemple, la durée de l’immunité devient l’un des paramètres le plus sensible dans ce nouveau modèle.
 
 
 
